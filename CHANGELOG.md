@@ -2,27 +2,83 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-_At the moment, the project does **not** adhere to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). That is expected to change with version 1.0._
+_At the moment, the project does **not** adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). That is expected to change with version 1.0._
 
-## [0.11.3] - Unreleased
+## [0.11.5] - 2019-09-26
 
-[0.11.3]: https://github.com/trezor/python-trezor/compare/v0.11.2...master
+[0.11.5]: https://github.com/trezor/trezor-firmware/compare/python/v0.11.4...python/v0.11.5
+
+### Added
+
+- trezorctl can dump raw protobuf bytes in debug output [f#117]
+- trezorctl shows a warning when activating Shamir Backup if the device does not support it [f#445]
+- warnings are emitted when encountering unknown value for a protobuf enum [f#363]
+- debug messages show enum value names instead of raw numbers
+- support for packed repeated encoding in the protobuf decoder
+- in `trezorctl firmware-update`, the new `--beta` switch enables downloading beta
+  firmwares. By default, only stable firmware is used. [f#411], [f#420]
+- in `trezorctl firmware-update`, the new `--bitcoin-only` switch enables downloading
+  Bitcoin-only firmware
+- support for FIDO2 resident credential management
+- support for SD-protect features
+
+### Changed
+
+- package directory structure was changed: `src` subdirectory contains sources and
+  `tests` subdirectory contains tests, so that cwd is not cluttered
+- `trezorctl` script was moved into a module `trezorlib.cli.trezorctl` and is launched
+  through the `entry_points` mechanism. This makes it usable on Windows
+- `pyblake2` is no longer required on Python 3.6 and up
+- input flows can only be used in with-block (only relevant for unit tests)
+- if not specified, trezorctl will set label to "SLIP-0014" in SLIP-0014 mode
+- in `clear_session` the client also forgets the passphrase state for TT [f#525]
+
+### Fixed
+
+- trezorctl will properly check if a firmware is present on a new T1 [f#224]
+
+### Removed
+
+- device test suite was moved out of trezor package
+
+## [0.11.4] - 2019-07-31
+
+[0.11.4]: https://github.com/trezor/trezor-firmware/compare/python/v0.11.3...python/v0.11.4
+
+### Added
+
+- trezorctl support for SLIP-39 Shamir Backup
+- support for Binance Chain
+
+## [0.11.3] - 2019-05-29
+
+[0.11.3]: https://github.com/trezor/trezor-firmware/compare/python/v0.11.2...python/v0.11.3
 
 ### Added
 
 - trezorctl can now send ERC20 tokens
 - trezorctl usb-reset will perform USB reset on devices in inconsistent state
 - set-display-rotation command added for TT firmware 2.1.1
+- EOS support [f#87]
+- Tezos: add voting support [f#41]
+- `dict_to_proto` now allows enum values as strings
 
 ### Changed
 
 - Minimum firmware versions bumped to 1.8.0 and 2.1.0
+- Cleaner errors when UI object is not supplied
+- Generated files are now part of the source tarball again. That means that `protoc` is no longer required.
 
 ### Fixed
 
 - Ethereum commands in trezorctl now work
+- Memory debugging tools now work again
+
+### Removed
+
+- Tron and Ontology support removed until implementations exist in Trezor firmware
 
 ## [0.11.2] - 2019-02-27
 
@@ -169,7 +225,7 @@ _At the moment, the project does **not** adhere to [Semantic Versioning](http://
 - protobuf messages are now logged through Python's `logging` facility instead of custom printing through `VerboseWireMixin`
 - `client.format_protobuf` is moved to `protobuf.format_message`
 - `tools.Hash` is renamed to `tools.btc_hash`
-- `coins` module `coins_txapi` is renamed to `tx_api`.  
+- `coins` module `coins_txapi` is renamed to `tx_api`.
   `coins_slip44` is renamed to `slip44`.
 - build: stricter flake8 checks
 - build: split requirements to separate files
@@ -265,3 +321,12 @@ _At the moment, the project does **not** adhere to [Semantic Versioning](http://
 [#349]: https://github.com/trezor/python-trezor/issues/349
 [#351]: https://github.com/trezor/python-trezor/issues/351
 [#352]: https://github.com/trezor/python-trezor/issues/352
+[f#41]: https://github.com/trezor/trezor-firmware/issues/41
+[f#87]: https://github.com/trezor/trezor-firmware/issues/87
+[f#117]: https://github.com/trezor/trezor-firmware/issues/117
+[f#224]: https://github.com/trezor/trezor-firmware/issues/224
+[f#363]: https://github.com/trezor/trezor-firmware/issues/363
+[f#411]: https://github.com/trezor/trezor-firmware/issues/411
+[f#420]: https://github.com/trezor/trezor-firmware/issues/420
+[f#445]: https://github.com/trezor/trezor-firmware/issues/445
+[f#525]: https://github.com/trezor/trezor-firmware/issues/525

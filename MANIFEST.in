@@ -1,9 +1,7 @@
 recursive-include bash_completion.d *.sh
 include tools/*
-recursive-include trezorlib *
-
-recursive-include vendor/trezor-common *
-exclude vendor/trezor-common/.*
+graft src
+graft tests
 
 include AUTHORS README.md COPYING CHANGELOG.md
 include requirements*.txt

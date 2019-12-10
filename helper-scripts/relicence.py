@@ -3,7 +3,7 @@
 LICENSE_NOTICE = """\
 # This file is part of the Trezor project.
 #
-# Copyright (C) 2012-2018 SatoshiLabs and contributors
+# Copyright (C) 2012-2019 SatoshiLabs and contributors
 #
 # This library is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License version 3
@@ -19,19 +19,36 @@ LICENSE_NOTICE = """\
 
 """
 
-EXCLUDE_FILES = ["trezorlib/__init__.py", "trezorlib/_ed25519.py"]
+SHEBANG_HEADER = """\
+#!/usr/bin/env python3
+
+"""
+
+EXCLUDE_FILES = ["src/trezorlibs/__init__.py", "src/trezorlibs/_ed25519.py"]
+EXCLUDE_DIRS = ["src/trezorlibs/messages"]
 
 
 def one_file(fp):
     lines = list(fp)
     new = lines[:]
+    shebang_header = False
+
+    if new[0].startswith("#!"):
+        shebang_header = True
+        new.pop(0)
+        if not new[0].strip():
+            new.pop(0)
+
     while new and new[0][0] == "#":
         new.pop(0)
 
     while new and new[0].strip() == "":
         new.pop(0)
 
-    data = "".join([LICENSE_NOTICE] + new)
+    new.insert(0, LICENSE_NOTICE)
+    if shebang_header:
+        new.insert(0, SHEBANG_HEADER)
+    data = "".join(new)
 
     fp.seek(0)
     fp.write(data)
@@ -40,12 +57,22 @@ def one_file(fp):
 
 import glob
 import os
+import sys
 
-for fn in glob.glob("trezorlib/**/*.py", recursive=True):
-    if fn in EXCLUDE_FILES:
-        continue
-    statinfo = os.stat(fn)
-    if statinfo.st_size == 0:
-        continue
-    with open(fn, "r+") as fp:
-        one_file(fp)
+
+def main(paths):
+    for path in paths:
+        for fn in glob.glob(f"{path}/**/*.py", recursive=True):
+            if any(exclude in fn for exclude in EXCLUDE_DIRS):
+                continue
+            if fn in EXCLUDE_FILES:
+                continue
+            statinfo = os.stat(fn)
+            if statinfo.st_size == 0:
+                continue
+            with open(fn, "r+") as fp:
+                one_file(fp)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
