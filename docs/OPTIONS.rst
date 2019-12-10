@@ -24,7 +24,7 @@ Use the following command to see all options:
     cardano-get-address             Get Cardano address.
     cardano-get-public-key          Get Cardano public key.
     cardano-sign-tx                 Sign Cardano transaction.
-    change-pin                      Change new PIN or remove existing.
+    change-pin                      Set, change or remove PIN.
     clear-session                   Clear session (remove cached PIN, passphrase, etc.).
     cosi-commit                     Ask device to commit to CoSi signing.
     cosi-sign                       Ask device to sign using CoSi.
@@ -32,6 +32,8 @@ Use the following command to see all options:
     disable-passphrase              Disable passphrase.
     enable-passphrase               Enable passphrase.
     encrypt-keyvalue                Encrypt value by given key and path.
+    eos_get_public_key              Get EOS public key in base58 encoding.
+    eos_sign_transaction            Sign EOS transaction...
     ethereum-get-address            Get Ethereum address in hex encoding.
     ethereum-sign-message           Sign message with Ethereum address.
     ethereum-sign-tx                Sign (and optionally publish) Ethereum transaction.
@@ -46,7 +48,7 @@ Use the following command to see all options:
     lisk-sign-message               Sign message with Lisk address.
     lisk-sign-tx                    Sign Lisk transaction.
     lisk-verify-message             Verify message signed with Lisk address.
-    list                            List connected TREZOR devices.
+    list                            List connected Trezor devices.
     load-device                     Load custom configuration to the device.
     monero-get-address              Get Monero address for specified path.
     monero-get-watch-key            Get Monero watch key for specified path.
@@ -64,6 +66,7 @@ Use the following command to see all options:
     reset-device                    Perform device setup and generate new seed.
     ripple-get-address              Get Ripple address
     ripple-sign-tx                  Sign Ripple transaction
+    sd-protect                      Secure the device with SD card protection.
     self-test                       Perform a self-test.
     set-auto-lock-delay             Set auto-lock delay (in seconds).
     set-flags                       Set device flags.
@@ -80,4 +83,7 @@ Use the following command to see all options:
     tezos-sign-tx                   Sign Tezos transaction.
     verify-message                  Verify message.
     version                         Show version of trezorctl/trezorlib.
+    webauthn-add-credential         Add the credential with the given ID as a resident credential.
+    webauthn-list-credentials       List all resident credentials on the device.
+    webauthn-remove-credential      Remove the resident credential at the given index.
     wipe-device                     Reset device to factory defaults and remove all private data.
