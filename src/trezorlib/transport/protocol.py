@@ -19,7 +19,7 @@ import os
 import struct
 from io import BytesIO
 from typing import Tuple
-
+import time
 from typing_extensions import Protocol as StructuralType
 
 from .. import mapping, protobuf
@@ -27,7 +27,7 @@ from ..log import DUMP_BYTES
 from . import Transport
 
 REPLEN = 64
-
+REPLEN_NFC = 1024
 V2_FIRST_CHUNK = 0x01
 V2_NEXT_CHUNK = 0x02
 V2_BEGIN_SESSION = 0x03
@@ -172,24 +172,39 @@ class ProtocolV1(Protocol):
         ser = data.getvalue()
         LOG.log(DUMP_BYTES, f"sending bytes: {ser.hex()}")
         header = struct.pack(">HL", mapping.get_type(msg), len(ser))
-        buffer = bytearray(b"0x2323" + header + ser)
-        while buffer:
-            # Report ID, data padded to 63 bytes
-            chunk = b"0x3F" + buffer[: REPLEN - 1]
-            chunk = chunk.ljust(REPLEN, b"\x00")
-            self.handle.write_chunk(chunk)
-            buffer = buffer[63:]
-            self.handle.write_chunk_nfc(buffer)
+        buffer = bytearray(b"?##" + header + ser)
+        # while buffer:
+        #     # Report ID, data padded to 63 bytes
+        #     chunk = b"?" + buffer[: REPLEN_NFC - 1]
+        #     chunk = chunk.ljust(REPLEN_NFC, b"\x00")
+        #     self.handle.write_chunk(chunk)
+        #     buffer = buffer[1023:]
+        #     state_code = self.handle.write_chunk_nfc(buffer)
+        #     while state_code == b"#**":
+        #
+        # response = self.handle.write_chunk_nfc(buffer)
+        # if response[:3] != b"?##":
+        #     raise RuntimeError("Unexpected magic characters")
+        print("----------sending----------------")
+        print(buffer)
+        print("----------sending----------------")
+        start = time.perf_counter()
         response = self.handle.write_chunk_nfc(buffer)
+        while response == b"#**":
+            response = self.handle.write_chunk_nfc(bytearray(b"#**"))
+            print("--------")
+            print(response)
+            print("--------")
         if response[:3] != b"?##":
-            raise RuntimeError("Unexpected magic characters")
+             raise RuntimeError("Unexpected magic characters")
         try:
             headerlen = struct.calcsize(">HL")
             msg_type, _ = struct.unpack(">HL", response[3: 3 + headerlen])
         except Exception:
             raise RuntimeError("Cannot parse header")
-
-        return protobuf.load_message(BytesIO(response), mapping.get_class(msg_type))
+        dur = time.perf_counter() - start
+        print("总耗时：%.5f" % dur)
+        return protobuf.load_message(BytesIO(response[3+headerlen:]), mapping.get_class(msg_type))
 
     def read(self) -> protobuf.MessageType:
         buffer = bytearray()
