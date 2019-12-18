@@ -26,9 +26,7 @@ def _load_coins_json():
     # NOTE: coins.json is generated via `make coins_json` command.
      try:
          with open(COINS_JSON) as coins_json:
-            print("haha")
             return  json.load(coins_json)
-    #      return json.loads(COINS_JSON, strict=False)
      except Exception as  e:
          print(e)
 

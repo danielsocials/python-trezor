@@ -69,7 +69,7 @@ def get_buttonrequest_value(code):
     ][0]
 
 
-def get_default_client(path=None, **kwargs):
+def get_default_client(path=None, ui=None, **kwargs):
     """Get a client for a connected Trezor device.
 
     Returns a TrezorClient instance with minimum fuss.
@@ -79,9 +79,12 @@ def get_default_client(path=None, **kwargs):
     the default CLI UI.
     """
     from .transport import get_transport
+    from .ui import ClickUI
 
     transport = get_transport(path, prefix_search=True)
-    return TrezorClient(transport, **kwargs)
+    if ui is None:
+        ui = ClickUI()
+    return TrezorClient(transport, ui, **kwargs)
 
 def ping1(path):
     client = get_default_client(path)
@@ -103,15 +106,16 @@ class TrezorClient:
     - button request (notify the user that their interaction is needed)
     - PIN request (on T1, ask the user to input numbers for a PIN matrix)
     - passphrase request (ask the user to enter a passphrase)
-    See `trezorlibs.ui` for details.
+    See `trezorlib.ui` for details.
 
     You can supply a `state` you saved in the previous session. If you do,
     the user might not need to enter their passphrase again.
     """
 
-    def __init__(self, transport, state=None):
+    def __init__(self, transport, ui=_NO_UI_OBJECT, state=None):
         LOG.info("creating client instance for device: {}".format(transport.get_path()))
         self.transport = transport
+        self.ui = ui
         self.state = state
 
         # XXX remove when old Electrum has been cycled out.
@@ -121,7 +125,8 @@ class TrezorClient:
         # so we are not allowed to crash in constructor.
         # I'd keep this until, say, end of 2019 (or version 0.12), and then drop
         # the default value for `ui` argument and all related functionality.
-
+        if ui is _NO_UI_OBJECT:
+            warnings.warn("UI object not supplied. This will probably crash soon.")
         self.session_counter = 0
         self.init_device()
 
