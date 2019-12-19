@@ -185,16 +185,11 @@ class ProtocolV1(Protocol):
         # response = self.handle.write_chunk_nfc(buffer)
         # if response[:3] != b"?##":
         #     raise RuntimeError("Unexpected magic characters")
-        print("----------sending----------------")
         print(buffer)
-        print("----------sending----------------")
         start = time.perf_counter()
         response = self.handle.write_chunk_nfc(buffer)
         while response == b"#**":
             response = self.handle.write_chunk_nfc(bytearray(b"#**"))
-            print("--------")
-            print(response)
-            print("--------")
         if response[:3] != b"?##":
              raise RuntimeError("Unexpected magic characters")
         try:
@@ -202,8 +197,6 @@ class ProtocolV1(Protocol):
             msg_type, _ = struct.unpack(">HL", response[3: 3 + headerlen])
         except Exception:
             raise RuntimeError("Cannot parse header")
-        dur = time.perf_counter() - start
-        print("总耗时：%.5f" % dur)
         return protobuf.load_message(BytesIO(response[3+headerlen:]), mapping.get_class(msg_type))
 
     def read(self) -> protobuf.MessageType:

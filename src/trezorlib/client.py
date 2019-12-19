@@ -86,12 +86,6 @@ def get_default_client(path=None, ui=None, **kwargs):
         ui = ClickUI()
     return TrezorClient(transport, ui, **kwargs)
 
-def ping1(path):
-    client = get_default_client(path)
-    print("******************************")
-    print(get_public_node(client, [0,0,1]))
-    print(client)
-
 class TrezorClient:
     """Trezor client, a connection to a Trezor device.
 
