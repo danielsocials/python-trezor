@@ -19,14 +19,17 @@ import os.path
 
 from .tx_api import TxApi
 
-COINS_JSON = os.path.join(os.path.dirname(__file__), "coins.json")
+COINS_JSON = os.path.join(os.path.dirname(__file__)+"coins.json")
 
 
 def _load_coins_json():
     # Load coins.json to local variables
     # NOTE: coins.json is generated via `make coins_json` command.
-    with open(COINS_JSON) as coins_json:
-        return json.load(coins_json)
+     try:
+         with open(COINS_JSON) as coins_json:
+            return  json.load(coins_json)
+     except Exception as  e:
+         print(e)
 
 
 # exported variables

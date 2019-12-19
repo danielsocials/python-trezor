@@ -55,6 +55,6 @@ def enable_debug_output(verbosity: int = 1, handler: Optional[logging.Handler] =
     if verbosity > 1:
         level = DUMP_BYTES
 
-    logger = logging.getLogger("trezorlibs")
+    logger = logging.getLogger("trezorlib")
     logger.setLevel(level)
     logger.addHandler(handler)

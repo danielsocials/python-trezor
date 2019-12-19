@@ -20,6 +20,7 @@ import warnings
 from types import SimpleNamespace
 
 from mnemonic import Mnemonic
+from .btc import get_public_node
 
 from . import MINIMUM_FIRMWARE_VERSION, exceptions, messages, tools
 
@@ -68,7 +69,7 @@ def get_buttonrequest_value(code):
     ][0]
 
 
-def get_default_client(path=None, **kwargs):
+def get_default_client(path=None, ui=None, **kwargs):
     """Get a client for a connected Trezor device.
 
     Returns a TrezorClient instance with minimum fuss.
@@ -81,8 +82,9 @@ def get_default_client(path=None, **kwargs):
     from .ui import ClickUI
 
     transport = get_transport(path, prefix_search=True)
-    return TrezorClient(transport, **kwargs)
-
+    if ui is None:
+        ui = ClickUI()
+    return TrezorClient(transport, ui, **kwargs)
 
 class TrezorClient:
     """Trezor client, a connection to a Trezor device.
@@ -92,21 +94,22 @@ class TrezorClient:
     (send a cancel message, initialize or clear a session, ping the device).
 
     You have to provide a transport, i.e., a raw connection to the device. You can use
-    `trezorlibs.transport.get_transport` to find one.
+    `trezorlib.transport.get_transport` to find one.
 
     You have to provide an UI implementation for the three kinds of interaction:
     - button request (notify the user that their interaction is needed)
     - PIN request (on T1, ask the user to input numbers for a PIN matrix)
     - passphrase request (ask the user to enter a passphrase)
-    See `trezorlibs.ui` for details.
+    See `trezorlib.ui` for details.
 
     You can supply a `state` you saved in the previous session. If you do,
     the user might not need to enter their passphrase again.
     """
 
-    def __init__(self, transport, state=None):
+    def __init__(self, transport, ui=_NO_UI_OBJECT, state=None):
         LOG.info("creating client instance for device: {}".format(transport.get_path()))
         self.transport = transport
+        self.ui = ui
         self.state = state
 
         # XXX remove when old Electrum has been cycled out.
@@ -116,7 +119,8 @@ class TrezorClient:
         # so we are not allowed to crash in constructor.
         # I'd keep this until, say, end of 2019 (or version 0.12), and then drop
         # the default value for `ui` argument and all related functionality.
-
+        if ui is _NO_UI_OBJECT:
+            warnings.warn("UI object not supplied. This will probably crash soon.")
         self.session_counter = 0
         self.init_device()
 
@@ -137,10 +141,11 @@ class TrezorClient:
 
     def call_raw(self, msg):
         __tracebackhide__ = True  # for pytest # pylint: disable=W0612
-        if self.transport.get_path == 'nfc':
+        if self.transport.get_path() == "nfc":
             return self.transport.send_nfc(msg)
-        self._raw_write(msg)
-        return self._raw_read()
+        else:
+            self._raw_write(msg)
+            return self._raw_read()
 
     def _raw_write(self, msg):
         __tracebackhide__ = True  # for pytest # pylint: disable=W0612
