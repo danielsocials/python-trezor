@@ -19,7 +19,7 @@ import os.path
 
 from .tx_api import TxApi
 
-COINS_JSON = os.path.join(os.path.dirname(__file__)+"coins.json")
+COINS_JSON = os.path.join(os.path.dirname(__file__), "coins.json")
 
 
 def _load_coins_json():
