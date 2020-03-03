@@ -118,8 +118,8 @@ def sign_tx(client, coin_name, inputs, outputs, details=None, prev_txes=None):
     signtx.coin_name = coin_name
     signtx.inputs_count = len(inputs)
     signtx.outputs_count = len(outputs)
-
     res = client.call(signtx)
+
 
     # Prepare structure for signatures
     signatures = [None] * len(inputs)
@@ -172,7 +172,6 @@ def sign_tx(client, coin_name, inputs, outputs, details=None, prev_txes=None):
                 msg.bin_outputs = [current_tx.bin_outputs[res.details.request_index]]
             else:
                 msg.outputs = [current_tx.outputs[res.details.request_index]]
-
             res = client.call(messages.TxAck(tx=msg))
 
         elif res.request_type == R.TXEXTRADATA:

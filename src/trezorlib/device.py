@@ -150,7 +150,7 @@ def reset(
     label=None,
     language="english",
     u2f_counter=0,
-    skip_backup=False,
+    skip_backup=True,
     no_backup=False,
     backup_type=proto.BackupType.Bip39,
 ):
@@ -178,7 +178,6 @@ def reset(
         no_backup=bool(no_backup),
         backup_type=backup_type,
     )
-
     resp = client.call(msg)
     if not isinstance(resp, proto.EntropyRequest):
         raise RuntimeError("Invalid response, expected EntropyRequest")

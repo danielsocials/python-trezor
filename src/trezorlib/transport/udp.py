@@ -26,7 +26,7 @@ class UdpTransport(ProtocolBasedTransport, Handle):
     DEFAULT_HOST = "127.0.0.1"
     DEFAULT_PORT = 21324
     PATH_PREFIX = "udp"
-    ENABLED = True
+    ENABLED = False
 
     def __init__(self, device: str = None) -> None:
         if not device:

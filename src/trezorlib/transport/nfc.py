@@ -29,12 +29,7 @@ class NFCHandle(Handle):
                 self.handle.connect()
             except IOException as e:
                 LOG.warning(f"NFC handler open exception {e.getMessage()}")
-            """
-            test code
-            """
-            # SELECT_APPLET_CMD = [0x00, 0xA4, 0x04, 0x00, 0x00]  #"00A4040000"
-            # response = self.write_chunk_nfc(SELECT_APPLET_CMD)
-            # print(response.hex())
+                raise BaseException(e)
 
     def close(self) -> None:
         if self.handle is not None:
@@ -42,13 +37,14 @@ class NFCHandle(Handle):
         self.handle = None
 
     def write_chunk_nfc(self, chunk: bytearray) -> bytes:
-        assert self.handle is not None
+        assert self.handle is not None, "NFC handler is None"
         response = []
         try:
             chunks = binascii.unhexlify(bytes(chunk).hex())
             response =  bytes(self.handle.transceive(chunks))
         except IOException as e:
             LOG.warning(f"NFC handler write exception {e.getMessage()}")
+            raise BaseException(e)
         return response
 
 
@@ -64,6 +60,8 @@ class NFCTransport(ProtocolBasedTransport):
         assert handle is not None, "nfc handler can not be None"
         self.device = device
         self.handle = handle
+        if not NFCHandle.device:
+             NFCTransport.ENABLED = False
         super().__init__(protocol=ProtocolV1(handle))
 
     def get_path(self) -> str:

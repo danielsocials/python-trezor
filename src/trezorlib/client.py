@@ -20,7 +20,6 @@ import warnings
 from types import SimpleNamespace
 
 from mnemonic import Mnemonic
-from .btc import get_public_node
 
 from . import MINIMUM_FIRMWARE_VERSION, exceptions, messages, tools
 
@@ -136,24 +135,31 @@ class TrezorClient:
 
     def cancel(self):
         if self.transport.get_path == 'nfc':
-            return self.transport.send_nfc(messages.Cancel())
-        self._raw_write(messages.Cancel())
+            return self._raw_write(messages.Cancel())
+        else:
+            self._raw_write(messages.Cancel())
 
     def call_raw(self, msg):
         __tracebackhide__ = True  # for pytest # pylint: disable=W0612
         if self.transport.get_path() == "nfc":
-            return self.transport.send_nfc(msg)
+            return self._raw_write(msg)
         else:
             self._raw_write(msg)
             return self._raw_read()
 
     def _raw_write(self, msg):
-        __tracebackhide__ = True  # for pytest # pylint: disable=W0612
-        self.transport.write(msg)
+        __tracebackhide__ = True # for pytest # pylint: disable=W0612
+        if self.transport.get_path() == "nfc":
+            return self.transport.send_nfc(msg)
+        else:
+            self.transport.write(msg)
 
     def _raw_read(self):
         __tracebackhide__ = True  # for pytest # pylint: disable=W0612
-        return self.transport.read()
+        if self.transport.get_path() == "bluetooth":
+            return self.transport.read_ble()
+        else:
+            return self.transport.read()
 
     def _callback_pin(self, msg):
         try:
@@ -165,7 +171,6 @@ class TrezorClient:
         if not pin.isdigit():
             self.call_raw(messages.Cancel())
             raise ValueError("Non-numeric PIN provided")
-
         resp = self.call_raw(messages.PinMatrixAck(pin=pin))
         if isinstance(resp, messages.Failure) and resp.code in (
                 messages.FailureType.PinInvalid,
@@ -204,8 +209,11 @@ class TrezorClient:
     def _callback_button(self, msg):
         __tracebackhide__ = True  # for pytest # pylint: disable=W0612
         # do this raw - send ButtonAck first, notify UI later
-        self._raw_write(messages.ButtonAck())
-        self.ui.button_request(msg.code)
+        if self.transport.get_path() == "nfc":
+            return self._raw_write(messages.ButtonAck())
+        else:
+            self.ui.button_request(msg.code)
+            self._raw_write(messages.ButtonAck())
         return self._raw_read()
 
     @tools.session
@@ -230,6 +238,7 @@ class TrezorClient:
     def init_device(self):
         resp = self.call_raw(messages.Initialize(state=self.state))
         if not isinstance(resp, messages.Features):
+            self.cancel()
             raise exceptions.TrezorException("Unexpected initial response")
         else:
             self.features = resp
