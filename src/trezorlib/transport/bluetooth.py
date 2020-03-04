@@ -3,7 +3,7 @@ from typing import Iterable, Optional, cast
 
 from . import TransportException
 from .protocol import ProtocolBasedTransport, get_protocol, Handle, ProtocolV1
-# from cn.com.heaton.blelibrary.ble.callback import BleWriteCallback
+from cn.com.heaton.blelibrary.ble.callback import BleWriteCallback
 from cn.com.heaton.blelibrary.ble import Ble
 from cn.com.heaton.blelibrary.ble.queue import RequestTask
 from cn.com.heaton.blelibrary.ble.model import BleDevice
@@ -12,8 +12,8 @@ class BlueToothHandler(Handle):
     BLE = None  # type: Ble
     # READ_CHARACTERISTIC = None #type: BluetoothGattCharacteristic
     BLE_DEVICE = None # type: BleDevice
-    BLE_ADDRESS = ""  # type:
-    CALL_BACK = None #type: BleWriteCallback
+    BLE_ADDRESS = ""  # type: str
+    CALL_BACK = None  # type: BleWriteCallback
     RESPONSE = bytes()  # type: bytes
 
     def __init__(self) -> None:
