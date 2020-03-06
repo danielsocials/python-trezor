@@ -28,10 +28,12 @@ class BlueToothHandler(Handle):
     def write_chunk(self, chunk: bytes) -> None:
         assert self.BLE is not None, "the bluetooth device is not available"
         chunks = binascii.unhexlify(bytes(chunk).hex())
-        if len(chunks) != 64:
-            raise TransportException("Unexpected data length")
+        # if len(chunks) != 64:
+        #     raise TransportException("Unexpected data length")
         # self.BLE.writeQueue(RequestTask.newWriteTask(self.BLE_ADDRESS, chunks))
+        print(f"write chunk ====={bytes(chunk).hex()}")
         success = self.BLE.write(self.BLE_DEVICE, chunks, self.CALL_BACK)
+        print(f"send {success}")
         if not success:
             raise BaseException("send failed")
     @classmethod

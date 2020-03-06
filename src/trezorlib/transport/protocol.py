@@ -17,9 +17,9 @@
 import logging
 import os
 import struct
+import time
 from io import BytesIO
 from typing import Tuple
-import time
 from typing_extensions import Protocol as StructuralType
 
 from .. import mapping, protobuf
@@ -162,15 +162,22 @@ class ProtocolV1(Protocol):
         ser = data.getvalue()
         LOG.log(DUMP_BYTES, "sending bytes: {}".format(ser.hex()))
         header = struct.pack(">HL", mapping.get_type(msg), len(ser))
-        buffer = bytearray(b"##" + header + ser)
-        LOG.info(f"====send in ble===={bytes(buffer).hex()}")
+        # used in usb
+        # buffer = bytearray(b"##" + header + ser)
+        buffer = bytearray(b"?##" + header + ser)
+        print(f"====send in ble===={bytes(buffer).hex()}")
         while buffer:
             # Report ID, data padded to 63 bytes
-            chunk = b"?" + buffer[: REPLEN - 1]
-            chunk = chunk.ljust(REPLEN, b"\x00")
+            # used in usb
+            # chunk = b"?" + buffer[: REPLEN - 1]
+            chunk = buffer[: REPLEN]
+            # used in usb
+            # chunk = chunk.ljust(REPLEN, b"\x00")
+            time.sleep(0.005)
             self.handle.write_chunk(chunk)
-            buffer = buffer[63:]
-
+            # used in usb
+            # buffer = buffer[63:]
+            buffer = buffer[64:]
     def nfc_send(self, msg: protobuf.MessageType) -> protobuf.MessageType:
         LOG.debug(
             f"sending message: {msg.__class__.__name__}",
@@ -179,7 +186,6 @@ class ProtocolV1(Protocol):
         data = BytesIO()
         protobuf.dump_message(data, msg)
         ser = data.getvalue()
-        LOG.log(DUMP_BYTES, f"sending bytes: {ser.hex()}")
         header = struct.pack(">HL", mapping.get_type(msg), len(ser))
         # buffer = bytearray(b"##" + header + ser)
         # chunk = bytearray()
@@ -205,7 +211,7 @@ class ProtocolV1(Protocol):
         # clear_response = clear_response[:data_len]
         # return protobuf.load_message(BytesIO(clear_response), mapping.get_class(msg_type))
         buffer = bytearray(b"?##" + header + ser)
-        LOG.info(f"send ====={bytes(buffer).hex()}")
+        print(f"send in nfc ====={bytes(buffer).hex()}")
         try:
             response = self.handle.write_chunk_nfc(buffer)
         except BaseException as e:
@@ -215,7 +221,7 @@ class ProtocolV1(Protocol):
         if response[:3] != b"?##":
              raise RuntimeError("Unexpected magic characters")
         try:
-            print(f"receive response ==== {response}")
+            print(f"receive response in nfc ==== {response}")
             headerlen = struct.calcsize(">HL")
             msg_type, _ = struct.unpack(">HL", response[3: 3 + headerlen])
         except Exception:
@@ -231,7 +237,7 @@ class ProtocolV1(Protocol):
             msg_type, _ = struct.unpack(">HL", response[3: 3 + headerlen])
         except Exception:
             raise RuntimeError("Cannot parse header")
-        LOG.info(f"response ===={protobuf.load_message(BytesIO(response[3+headerlen:]), mapping.get_class(msg_type))}")
+        print(f"receive response in BLE ===={protobuf.load_message(BytesIO(response[3+headerlen:]), mapping.get_class(msg_type))}")
         return protobuf.load_message(BytesIO(response[3+headerlen:]), mapping.get_class(msg_type))
 
     def read(self) -> protobuf.MessageType:
