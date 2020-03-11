@@ -1,4 +1,6 @@
 import binascii
+import time
+
 from typing import Iterable, Optional, cast
 
 from . import TransportException
@@ -17,6 +19,7 @@ class BlueToothHandler(Handle):
     RESPONSE = bytes()  # type: bytes
 
     def __init__(self) -> None:
+        self.retry_count = 3
         pass
 
     def open(self) -> None:
@@ -32,8 +35,14 @@ class BlueToothHandler(Handle):
         #     raise TransportException("Unexpected data length")
         # self.BLE.writeQueue(RequestTask.newWriteTask(self.BLE_ADDRESS, chunks))
         print(f"write chunk ====={bytes(chunk).hex()}")
-        success = self.BLE.write(self.BLE_DEVICE, chunks, self.CALL_BACK)
-        print(f"send {success}")
+        count = 0
+        success = False
+        while count < self.retry_count and  not  success:
+            success = self.BLE.write(self.BLE_DEVICE, chunks, self.CALL_BACK)
+            if not success:
+                count = count + 1
+                time.sleep(0.5)
+        print(f"send {success}=====try: {count}")
         if not success:
             raise BaseException("send failed")
     @classmethod
