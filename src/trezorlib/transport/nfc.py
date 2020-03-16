@@ -60,8 +60,6 @@ class NFCTransport(ProtocolBasedTransport):
         assert handle is not None, "nfc handler can not be None"
         self.device = device
         self.handle = handle
-        if not NFCHandle.device:
-             NFCTransport.ENABLED = False
         super().__init__(protocol=ProtocolV1(handle))
 
     def get_path(self) -> str:
