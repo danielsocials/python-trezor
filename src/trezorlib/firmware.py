@@ -412,12 +412,13 @@ def validate(
 
 
 @tools.session
-def update(client, data):
+def update(client, data, type=""):
     if client.features.bootloader_mode is False:
         raise RuntimeError("Device must be in bootloader mode")
-
-    resp = client.call(messages.FirmwareErase(length=len(data)))
-
+    if type:
+        resp = client.call(messages.FirmwareEraseBle(length=len(data)))
+    else:
+        resp = client.call(messages.FirmwareErase(length=len(data)))
     # TREZORv1 method
     if isinstance(resp, messages.Success):
         resp = client.call(messages.FirmwareUpload(payload=data))

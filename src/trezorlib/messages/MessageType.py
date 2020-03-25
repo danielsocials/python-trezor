@@ -33,6 +33,7 @@ GetFeatures = 55
 SetU2FCounter = 63
 SdProtect = 79
 FirmwareErase = 6
+FirmwareEraseBle = 16
 FirmwareUpload = 7
 FirmwareRequest = 8
 SelfTest = 32
