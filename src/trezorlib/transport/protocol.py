@@ -237,8 +237,7 @@ class ProtocolV1(Protocol):
             msg_type, data_len = struct.unpack(">HL", response[3: 3 + headerlen])
         except Exception:
             raise RuntimeError("Cannot parse header")
-        print(
-            f"receive response :{protobuf.load_message(BytesIO(response[3 + headerlen:]), mapping.get_class(msg_type))}")
+        print(f"receive response :{protobuf.load_message(BytesIO(response[3 + headerlen:]), mapping.get_class(msg_type))}")
         return protobuf.load_message(BytesIO(response[3 + headerlen:]), mapping.get_class(msg_type))
 
         """
