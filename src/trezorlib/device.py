@@ -91,7 +91,7 @@ def wipe(client):
 def recover(
     client,
     word_count=24,
-    passphrase_protection=False,
+    passphrase_protection=True,
     pin_protection=True,
     label=None,
     language="english",
@@ -145,7 +145,7 @@ def reset(
     client,
     display_random=False,
     strength=None,
-    passphrase_protection=False,
+    passphrase_protection=True,
     pin_protection=True,
     label=None,
     language="english",

@@ -9,6 +9,7 @@ class CustomerUI:
     pin = ''  # type: str
     passphrase = ''  # type: str
     state = 0  # type: int
+    pass_state = 0
     handler = None # type: Handler
     @classmethod
     def get_pin(cls, code) -> str:
@@ -29,6 +30,16 @@ class CustomerUI:
         cls.state = state
 
     @classmethod
+    def set_pass_state(cls, state):
+        cls.pass_state = state
+
+    @classmethod
+    def get_pass_state(cls):
+        pass_state_current = cls.pass_state
+        cls.pass_state = 0
+        return pass_state_current
+
+    @classmethod
     def get_state(cls):
         state_current = cls.state
         cls.state = 0
@@ -36,10 +47,26 @@ class CustomerUI:
 
 
     @classmethod
-    def get_passphrase(cls) -> str:
+    def get_passphrase(cls, msg) -> str:
+        cls.code = msg
+        if cls.pass_state == 0:
+            return ''
+        if cls.handler:
+            if msg == ("Enter a passphrase to generate this wallet.  Each time "
+                       "you use this wallet your Trezor will prompt you for the "
+                       "passphrase.  If you forget the passphrase you cannot "
+                       "access the bitcoins in the wallet."):
+                cls.handler.sendEmptyMessage(6)
+            elif msg == 'Enter the passphrase to unlock this wallet:':
+                cls.handler.sendEmptyMessage(3)
         while True:
             if cls.passphrase != '':
-                return cls.passphrase
+                passphrase_current = cls.passphrase
+                cls.passphrase = ''
+                return passphrase_current
+            else:
+                import time
+                time.sleep(0.01)
 
     @classmethod
     def button_request(cls, code):
@@ -69,4 +96,3 @@ class CustomerUI:
 
     def update_status(self, b):
         _logger.info(f'hw device status {b}')
-
