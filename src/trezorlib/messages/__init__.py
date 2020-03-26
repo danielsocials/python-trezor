@@ -94,6 +94,7 @@ from .EthereumVerifyMessage import EthereumVerifyMessage
 from .Failure import Failure
 from .Features import Features
 from .FirmwareErase import FirmwareErase
+from .FirmwareEraseBle import FirmwareEraseBle
 from .FirmwareRequest import FirmwareRequest
 from .FirmwareUpload import FirmwareUpload
 from .GetAddress import GetAddress

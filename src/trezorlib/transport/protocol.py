@@ -21,8 +21,8 @@ import time
 from io import BytesIO
 from typing import Tuple
 from typing_extensions import Protocol as StructuralType
-
-from .. import mapping, protobuf
+from android.os import AsyncTask
+from .. import mapping, protobuf, messages
 from ..log import DUMP_BYTES
 from . import Transport
 
@@ -32,6 +32,7 @@ V2_FIRST_CHUNK = 0x01
 V2_NEXT_CHUNK = 0x02
 V2_BEGIN_SESSION = 0x03
 V2_END_SESSION = 0x04
+PROCESS_REPORTER = None
 
 LOG = logging.getLogger(__name__)
 
@@ -130,7 +131,7 @@ class ProtocolBasedTransport(Transport):
         self.protocol.write(message)
 
     def send_nfc(self, message: protobuf.MessageType) -> protobuf.MessageType:
-       return self.protocol.nfc_send(message)
+        return self.protocol.nfc_send(message)
 
     def read_ble(self) -> protobuf.MessageType:
         return self.protocol.ble_read()
@@ -153,6 +154,7 @@ class ProtocolV1(Protocol):
     VERSION = 1
 
     def write(self, msg: protobuf.MessageType) -> None:
+        global PROCESS_REPORTER
         LOG.debug(
             "sending message: {}".format(msg.__class__.__name__),
             extra={"protobuf": msg},
@@ -162,23 +164,33 @@ class ProtocolV1(Protocol):
         ser = data.getvalue()
         LOG.log(DUMP_BYTES, "sending bytes: {}".format(ser.hex()))
         header = struct.pack(">HL", mapping.get_type(msg), len(ser))
-        # used in usb
-        # buffer = bytearray(b"##" + header + ser)
-        buffer = bytearray(b"?##" + header + ser)
-        print(f"====send in ble===={bytes(buffer).hex()}")
+        buffer = bytearray(b"##" + header + ser)
+        origin = len(buffer)
+        send_len = 0 - len(header) - 2
         while buffer:
+            if PROCESS_REPORTER and origin >= 64:
+                left = round(len(buffer) / origin, 2)
+                PROCESS_REPORTER.publishProgress(int((1 - left) * 100))
+                if len(buffer) <= 64:
+                    PROCESS_REPORTER = None
+                if send_len >= 64 * 1024:
+                    # resp = self.ble_read()
+                    # if isinstance(resp, messages.Success):
+                    #     send_len = send_len - 64 * 1024
+                    # else:
+                    #     raise BaseException("update failed")
+                    time.sleep(1)
+                    send_len = send_len - 64 * 1024
             # Report ID, data padded to 63 bytes
-            # used in usb
-            # chunk = b"?" + buffer[: REPLEN - 1]
-            chunk = buffer[: REPLEN]
-            # used in usb
-            # chunk = chunk.ljust(REPLEN, b"\x00")
-            time.sleep(0.005)
+            chunk = b"?" + buffer[: REPLEN - 1]
+            chunk = chunk.ljust(REPLEN, b"\x00")
+            time.sleep(0.002)
             self.handle.write_chunk(chunk)
-            # used in usb
-            # buffer = buffer[63:]
-            buffer = buffer[64:]
+            send_len = send_len + 63
+            buffer = buffer[63:]
+
     def nfc_send(self, msg: protobuf.MessageType) -> protobuf.MessageType:
+        global PROCESS_REPORTER
         LOG.debug(
             f"sending message: {msg.__class__.__name__}",
             extra={"protobuf": msg},
@@ -190,20 +202,32 @@ class ProtocolV1(Protocol):
         buffer = bytearray(b"##" + header + ser)
         print(f"send in nfc 3F{bytes(buffer).hex()}")
         # split buffer into 64 bytes one package to send
+        origin = len(buffer)
+        send_len = 0 - len(header) - 2
         while buffer:
             chunk = bytearray()
+            if PROCESS_REPORTER and origin >= 64:
+                left = round(len(buffer) / origin, 2)
+                PROCESS_REPORTER.publishProgress(int((1 - left) * 100))
+                if len(buffer) <= 64:
+                    PROCESS_REPORTER = None
+                if send_len >= 64 * 1024:
+                    send_len = send_len - 64 * 1024
+                    time.sleep(1)
+
             # Report ID, data padded to 63 bytes
             chunk.extend(b"?" + buffer[: REPLEN - 1])
             chunk = chunk.ljust(REPLEN, b"\x00")
             response = self.handle.write_chunk_nfc(chunk)
             print(f"receive ==== {response}")
             if response == b'\x90\x00':
+                send_len = send_len + 63
                 buffer = buffer[63:]
             else:
                 print(f"unknown response {response}")
                 raise BaseException("Unexpected response")
         print(f"send in nfc #**")
-        response  =  self.handle.write_chunk_nfc(bytearray(b'#**'))
+        response = self.handle.write_chunk_nfc(bytearray(b'#**'))
         while response == b'#**':
             response = self.handle.write_chunk_nfc(bytearray(b'#**'))
         if response[:3] != b"?##":
@@ -212,7 +236,7 @@ class ProtocolV1(Protocol):
             headerlen = struct.calcsize(">HL")
             msg_type, data_len = struct.unpack(">HL", response[3: 3 + headerlen])
         except Exception:
-                raise RuntimeError("Cannot parse header")
+            raise RuntimeError("Cannot parse header")
         print(f"receive response :{protobuf.load_message(BytesIO(response[3 + headerlen:]), mapping.get_class(msg_type))}")
         return protobuf.load_message(BytesIO(response[3 + headerlen:]), mapping.get_class(msg_type))
 
