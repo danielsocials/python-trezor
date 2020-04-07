@@ -1,6 +1,11 @@
+import time
+
 from electrum.util import print_stderr, raw_input, _logger
+
+from . import exceptions
 from .ui import PIN_CURRENT, PIN_NEW, PIN_CONFIRM
 from android.os import Handler
+
 
 class CustomerUI:
     def __init__(self):
@@ -8,9 +13,10 @@ class CustomerUI:
 
     pin = ''  # type: str
     passphrase = ''  # type: str
-    state = 0  # type: int
+    user_cancel = 0
     pass_state = 0
-    handler = None # type: Handler
+    handler = None  # type: Handler
+
     @classmethod
     def get_pin(cls, code) -> str:
         cls.code = code
@@ -19,15 +25,18 @@ class CustomerUI:
                 cls.handler.sendEmptyMessage(2)
             elif code == 'Enter your current Trezor PIN:':
                 cls.handler.sendEmptyMessage(1)
+        start = int(time.time())
         while True:
+            if cls.user_cancel:
+                cls.user_cancel = 0
+                raise exceptions.Cancelled
+            wait_seconds = int(time.time()) - start
             if cls.pin != '':
                 pin_current = cls.pin
                 cls.pin = ''
                 return pin_current
-
-    @classmethod
-    def set_state(cls, state):
-        cls.state = state
+            elif wait_seconds >= 60:
+                raise exceptions.TrezorFailure
 
     @classmethod
     def set_pass_state(cls, state):
@@ -45,12 +54,13 @@ class CustomerUI:
         cls.state = 0
         return state_current
 
-
     @classmethod
     def get_passphrase(cls, msg) -> str:
         cls.code = msg
         if cls.pass_state == 0:
             return ''
+        start = int(time.time())
+        cls.pass_state = 0
         if cls.handler:
             if msg == ("Enter a passphrase to generate this wallet.  Each time "
                        "you use this wallet your Trezor will prompt you for the "
@@ -60,19 +70,25 @@ class CustomerUI:
             elif msg == 'Enter the passphrase to unlock this wallet:':
                 cls.handler.sendEmptyMessage(3)
         while True:
+            if cls.user_cancel:
+                cls.user_cancel = 0
+                raise exceptions.Cancelled
+            wait_seconds = int(time.time()) - start
             if cls.passphrase != '':
                 passphrase_current = cls.passphrase
                 cls.passphrase = ''
                 return passphrase_current
-            else:
-                import time
-                time.sleep(0.01)
+            elif wait_seconds >= 60:
+                raise exceptions.TrezorFailure
+            #
 
     @classmethod
     def button_request(cls, code):
         return
+
     def finished(self):
         return
+
     def show_message(self, msg, on_cancel=None):
         return
 

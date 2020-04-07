@@ -151,6 +151,8 @@ class TrezorClient:
         __tracebackhide__ = True # for pytest # pylint: disable=W0612
         if self.transport.get_path() == "nfc":
             return self.transport.send_nfc(msg)
+        elif self.transport.get_path() == "bluetooth":
+            self.transport.write_ble(msg)
         else:
             self.transport.write(msg)
 

@@ -27,6 +27,7 @@ from ..log import DUMP_BYTES
 from . import Transport
 
 REPLEN = 64
+BLE_REPLEN = 192
 REPLEN_NFC = 1024
 V2_FIRST_CHUNK = 0x01
 V2_NEXT_CHUNK = 0x02
@@ -116,6 +117,9 @@ class Protocol:
     def ble_read(self) -> protobuf.MessageType:
         raise NotImplementedError
 
+    def write_ble(self, message):
+        pass
+
 
 class ProtocolBasedTransport(Transport):
     """Transport that implements its communications through a Protocol.
@@ -129,6 +133,9 @@ class ProtocolBasedTransport(Transport):
 
     def write(self, message: protobuf.MessageType) -> None:
         self.protocol.write(message)
+
+    def write_ble(self, message: protobuf.MessageType) -> None:
+        self.protocol.write_ble(message)
 
     def send_nfc(self, message: protobuf.MessageType) -> protobuf.MessageType:
         return self.protocol.nfc_send(message)
@@ -188,6 +195,42 @@ class ProtocolV1(Protocol):
             self.handle.write_chunk(chunk)
             send_len = send_len + 63
             buffer = buffer[63:]
+
+    def write_ble(self, msg: protobuf.MessageType) -> None:
+        global PROCESS_REPORTER
+        LOG.debug(
+            "sending message: {}".format(msg.__class__.__name__),
+            extra={"protobuf": msg},
+        )
+        data = BytesIO()
+        protobuf.dump_message(data, msg)
+        ser = data.getvalue()
+        LOG.log(DUMP_BYTES, "sending bytes: {}".format(ser.hex()))
+        header = struct.pack(">HL", mapping.get_type(msg), len(ser))
+        buffer = bytearray(b"##" + header + ser)
+        origin = len(buffer)
+        send_len = 0 - len(header) - 2
+        while buffer:
+            if PROCESS_REPORTER and origin >= 64:
+                left = round(len(buffer) / origin, 2)
+                PROCESS_REPORTER.publishProgress(int((1 - left) * 100))
+                if len(buffer) <= 64:
+                    PROCESS_REPORTER = None
+                if send_len >= 64 * 1024:
+                    time.sleep(1)
+                    send_len = send_len - 64 * 1024
+            # Report ID, data padded to 63 bytes
+            waiting_packets = buffer[:189]
+            send_packets = []
+            while waiting_packets:
+                chunk = b"?" + waiting_packets[: REPLEN - 1]
+                chunk = chunk.ljust(REPLEN, b"\x00")
+                send_packets.extend(chunk)
+                waiting_packets = waiting_packets[63:]
+            time.sleep(0.005)
+            self.handle.write_chunk(bytes(send_packets))
+            send_len = send_len + 189
+            buffer = buffer[189:]
 
     def nfc_send(self, msg: protobuf.MessageType) -> protobuf.MessageType:
         global PROCESS_REPORTER
