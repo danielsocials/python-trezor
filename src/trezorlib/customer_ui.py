@@ -2,8 +2,6 @@ import time
 
 from electrum.util import print_stderr, raw_input, _logger
 
-from . import exceptions
-from .ui import PIN_CURRENT, PIN_NEW, PIN_CONFIRM
 from android.os import Handler
 
 
@@ -25,18 +23,14 @@ class CustomerUI:
                 cls.handler.sendEmptyMessage(2)
             elif code == 'Enter your current Trezor PIN:':
                 cls.handler.sendEmptyMessage(1)
-        start = int(time.time())
         while True:
             if cls.user_cancel:
                 cls.user_cancel = 0
-                raise exceptions.Cancelled
-            wait_seconds = int(time.time()) - start
+                raise BaseException("user cancel")
             if cls.pin != '':
                 pin_current = cls.pin
                 cls.pin = ''
                 return pin_current
-            elif wait_seconds >= 60:
-                raise exceptions.TrezorFailure
 
     @classmethod
     def set_pass_state(cls, state):
@@ -59,7 +53,6 @@ class CustomerUI:
         cls.code = msg
         if cls.pass_state == 0:
             return ''
-        start = int(time.time())
         cls.pass_state = 0
         if cls.handler:
             if msg == ("Enter a passphrase to generate this wallet.  Each time "
@@ -72,14 +65,11 @@ class CustomerUI:
         while True:
             if cls.user_cancel:
                 cls.user_cancel = 0
-                raise exceptions.Cancelled
-            wait_seconds = int(time.time()) - start
+                raise BaseException("user cancel")
             if cls.passphrase != '':
                 passphrase_current = cls.passphrase
                 cls.passphrase = ''
                 return passphrase_current
-            elif wait_seconds >= 60:
-                raise exceptions.TrezorFailure
             #
 
     @classmethod

@@ -1,3 +1,5 @@
+import time
+
 import logging
 from typing import Iterable, Optional
 from .protocol import ProtocolBasedTransport, ProtocolV1, Handle
@@ -39,12 +41,21 @@ class NFCHandle(Handle):
     def write_chunk_nfc(self, chunk: bytearray) -> bytes:
         assert self.handle is not None, "NFC handler is None"
         response = []
-        try:
-            chunks = binascii.unhexlify(bytes(chunk).hex())
-            response =  bytes(self.handle.transceive(chunks))
-        except IOException as e:
-            LOG.warning(f"NFC handler write exception {e.getMessage()}")
-            raise BaseException(e)
+        chunks = binascii.unhexlify(bytes(chunk).hex())
+        count = 0
+        success = False
+        while count < 3 and not success:
+            try:
+                response =  bytes(self.handle.transceive(chunks))
+                success = True
+            except IOException as e:
+                if  count < 2:
+                    count = count + 1
+                    print(f"send in nfc =====retry: {count}===={e.getMessage()}")
+                    time.sleep(0.01)
+                else:
+                    LOG.warning(f"NFC handler write exception {e.getMessage()}")
+                    raise BaseException(e)
         return response
 
 

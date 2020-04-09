@@ -3,13 +3,11 @@ import time
 
 from typing import Iterable, Optional, cast
 
-from . import TransportException
 from .protocol import ProtocolBasedTransport, get_protocol, Handle, ProtocolV1
 from cn.com.heaton.blelibrary.ble.callback import BleWriteCallback
 from cn.com.heaton.blelibrary.ble import Ble
 from cn.com.heaton.blelibrary.ble.model import BleDevice
 
-from .. import exceptions
 
 
 class BlueToothHandler(Handle):
@@ -55,7 +53,7 @@ class BlueToothHandler(Handle):
                 cls.RESPONSE = bytes()
                 return new_response
             elif wait_seconds >= 30:
-                raise exceptions.TrezorFailure
+                raise BaseException("read ble response timeout")
 
 
 class BlueToothTransport(ProtocolBasedTransport):
