@@ -23,14 +23,19 @@ class CustomerUI:
                 cls.handler.sendEmptyMessage(2)
             elif code == 'Enter your current Trezor PIN:':
                 cls.handler.sendEmptyMessage(1)
+        start = int(time.time())
         while True:
+            wait_seconds = int(time.time()) - start
             if cls.user_cancel:
                 cls.user_cancel = 0
                 raise BaseException("user cancel")
-            if cls.pin != '':
+            elif cls.pin != '':
                 pin_current = cls.pin
                 cls.pin = ''
                 return pin_current
+            elif wait_seconds >= 60:
+                raise BaseException("waiting pin timeout")
+
 
     @classmethod
     def set_pass_state(cls, state):
@@ -62,14 +67,18 @@ class CustomerUI:
                 cls.handler.sendEmptyMessage(6)
             elif msg == 'Enter the passphrase to unlock this wallet:':
                 cls.handler.sendEmptyMessage(3)
+        start = int(time.time())
         while True:
+            wait_seconds = int(time.time()) - start
             if cls.user_cancel:
                 cls.user_cancel = 0
                 raise BaseException("user cancel")
-            if cls.passphrase != '':
+            elif cls.passphrase != '':
                 passphrase_current = cls.passphrase
                 cls.passphrase = ''
                 return passphrase_current
+            elif wait_seconds >= 60:
+                raise BaseException("waiting passphrase timeout")
             #
 
     @classmethod
