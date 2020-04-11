@@ -22,12 +22,11 @@ import construct as c
 import ecdsa
 
 from . import cosi, messages, tools
-
+from .transport import protocol
 try:
     from hashlib import blake2s
 except ImportError:
     from pyblake2 import blake2s
-
 
 V1_SIGNATURE_SLOTS = 3
 V1_BOOTLOADER_KEYS = {
@@ -84,7 +83,6 @@ Toif = c.Struct(
     "data" / c.Prefixed(c.Int32ul, c.GreedyBytes),
 )
 
-
 VendorTrust = c.Transformed(c.BitStruct(
     "reserved" / c.Default(c.BitsInteger(9), 0),
     "show_vendor_string" / c.Flag,
@@ -92,7 +90,6 @@ VendorTrust = c.Transformed(c.BitStruct(
     "red_background" / c.Flag,
     "delay" / c.BitsInteger(4),
 ), _transform_vendor_trust, 2, _transform_vendor_trust, 2)
-
 
 VendorHeader = c.Struct(
     "_start_offset" / c.Tell,
@@ -123,14 +120,12 @@ VendorHeader = c.Struct(
     ),
 )
 
-
 VersionLong = c.Struct(
     "major" / c.Int8ul,
     "minor" / c.Int8ul,
     "patch" / c.Int8ul,
     "build" / c.Int8ul,
 )
-
 
 FirmwareHeader = c.Struct(
     "_start_offset" / c.Tell,
@@ -140,8 +135,8 @@ FirmwareHeader = c.Struct(
     "code_length" / c.Rebuild(
         c.Int32ul,
         lambda this:
-            len(this._.code) if "code" in this._
-            else (this.code_length or 0)
+        len(this._.code) if "code" in this._
+        else (this.code_length or 0)
     ),
     "version" / VersionLong,
     "fix_version" / VersionLong,
@@ -166,7 +161,6 @@ FirmwareHeader = c.Struct(
     ),
 )
 
-
 Firmware = c.Struct(
     "vendor_header" / VendorHeader,
     "firmware_header" / FirmwareHeader,
@@ -175,14 +169,12 @@ Firmware = c.Struct(
     c.Terminated,
 )
 
-
 FirmwareOneV2 = c.Struct(
     "firmware_header" / FirmwareHeader,
     "_code_offset" / c.Tell,
     "code" / c.Bytes(c.this.firmware_header.code_length),
     c.Terminated,
 )
-
 
 FirmwareOne = c.Struct(
     "magic" / c.Const(b"TRZR"),
@@ -199,6 +191,7 @@ FirmwareOne = c.Struct(
 
     "embedded_onev2" / c.RestreamData(c.this.code, c.Optional(FirmwareOneV2)),
 )
+
 
 # fmt: on
 
@@ -238,7 +231,7 @@ def digest_onev1(fw: FirmwareType) -> bytes:
 
 
 def check_sig_v1(
-    digest: bytes, key_indexes: List[int], signatures: List[bytes]
+        digest: bytes, key_indexes: List[int], signatures: List[bytes]
 ) -> None:
     distinct_key_indexes = set(i for i in key_indexes if i != 0)
     if not distinct_key_indexes:
@@ -268,7 +261,7 @@ def check_sig_v1(
 
 
 def _header_digest(
-    header: c.Container, header_type: c.Construct, hash_function: Callable = blake2s
+        header: c.Container, header_type: c.Construct, hash_function: Callable = blake2s
 ) -> bytes:
     stripped_header = header.copy()
     stripped_header.sigmask = 0
@@ -288,10 +281,10 @@ def digest_onev2(fw: FirmwareType) -> bytes:
 
 
 def validate_code_hashes(
-    fw: FirmwareType,
-    hash_function: Callable = blake2s,
-    chunk_size: int = V2_CHUNK_SIZE,
-    padding_byte: bytes = None,
+        fw: FirmwareType,
+        hash_function: Callable = blake2s,
+        chunk_size: int = V2_CHUNK_SIZE,
+        padding_byte: bytes = None,
 ) -> None:
     for i, expected_hash in enumerate(fw.firmware_header.hashes):
         if i == 0:
@@ -300,7 +293,7 @@ def validate_code_hashes(
         else:
             # Subsequent chunks are shifted by the "missing header" size.
             ptr = i * chunk_size - fw._code_offset
-            chunk = fw.code[ptr : ptr + chunk_size]
+            chunk = fw.code[ptr: ptr + chunk_size]
 
         # padding for last chunk
         if padding_byte is not None and i > 1 and chunk and len(chunk) < chunk_size:
@@ -396,7 +389,7 @@ def digest(version: FirmwareFormat, fw: FirmwareType) -> bytes:
 
 
 def validate(
-    version: FirmwareFormat, fw: FirmwareType, allow_unsigned: bool = False
+        version: FirmwareFormat, fw: FirmwareType, allow_unsigned: bool = False
 ) -> None:
     if version == FirmwareFormat.TREZOR_ONE:
         return validate_onev1(fw, allow_unsigned)
@@ -415,23 +408,25 @@ def validate(
 def update(client, data, type=""):
     if client.features.bootloader_mode is False:
         raise RuntimeError("Device must be in bootloader mode")
-    if type:
-        resp = client.call(messages.FirmwareEraseBle(length=len(data)))
-    else:
-        resp = client.call(messages.FirmwareErase(length=len(data)))
-    # TREZORv1 method
-    if isinstance(resp, messages.Success):
+    if client.features.offset:
+        protocol.HTTP = True
+        protocol.OFFSET = client.features.offset
+        protocol.TOTAL = len(data)
+        data = data[client.features.offset:]
         resp = client.call(messages.FirmwareUpload(payload=data))
-        if isinstance(resp, messages.Success):
-            return
+    else:
+        if type:
+            resp = client.call(messages.FirmwareEraseBle(length=len(data)))
         else:
-            raise RuntimeError("Unexpected result %s" % resp)
-
-    # TREZORv2 method
-    while isinstance(resp, messages.FirmwareRequest):
-        payload = data[resp.offset : resp.offset + resp.length]
-        digest = blake2s(payload).digest()
-        resp = client.call(messages.FirmwareUpload(payload=payload, hash=digest))
+            resp = client.call(messages.FirmwareErase(length=len(data)))
+        # TREZORv1 method
+        if isinstance(resp, messages.Success):
+            resp = client.call(messages.FirmwareUpload(payload=data))
+        # TREZORv2 method
+        while isinstance(resp, messages.FirmwareRequest):
+            payload = data[resp.offset: resp.offset + resp.length]
+            digest = blake2s(payload).digest()
+            resp = client.call(messages.FirmwareUpload(payload=payload, hash=digest))
 
     if isinstance(resp, messages.Success):
         return

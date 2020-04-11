@@ -35,6 +35,8 @@ class CustomerUI:
                 return pin_current
             elif wait_seconds >= 60:
                 raise BaseException("waiting pin timeout")
+            else:
+                time.sleep(0.001)
 
 
     @classmethod
@@ -79,6 +81,8 @@ class CustomerUI:
                 return passphrase_current
             elif wait_seconds >= 60:
                 raise BaseException("waiting passphrase timeout")
+            else:
+                time.sleep(0.001)
             #
 
     @classmethod

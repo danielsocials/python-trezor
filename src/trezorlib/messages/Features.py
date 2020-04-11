@@ -49,6 +49,7 @@ class Features(p.MessageType):
         recovery_mode: bool = None,
         capabilities: List[EnumTypeCapability] = None,
         backup_type: EnumTypeBackupType = None,
+        offset: int = None,
     ) -> None:
         self.vendor = vendor
         self.major_version = major_version
@@ -80,6 +81,7 @@ class Features(p.MessageType):
         self.recovery_mode = recovery_mode
         self.capabilities = capabilities if capabilities is not None else []
         self.backup_type = backup_type
+        self.offset = offset
 
     @classmethod
     def get_fields(cls) -> Dict:
@@ -114,4 +116,5 @@ class Features(p.MessageType):
             29: ('recovery_mode', p.BoolType, 0),
             30: ('capabilities', p.EnumType("Capability", (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)), p.FLAG_REPEATED),
             31: ('backup_type', p.EnumType("BackupType", (0, 1, 2)), 0),
+            50: ('offset', p.UVarintType, 0),
         }

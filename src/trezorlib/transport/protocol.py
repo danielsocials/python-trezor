@@ -34,6 +34,9 @@ V2_NEXT_CHUNK = 0x02
 V2_BEGIN_SESSION = 0x03
 V2_END_SESSION = 0x04
 PROCESS_REPORTER = None
+HTTP = False
+OFFSET = 0
+TOTAL = 0
 
 LOG = logging.getLogger(__name__)
 
@@ -234,7 +237,7 @@ class ProtocolV1(Protocol):
             buffer = buffer[189:]
 
     def nfc_send(self, msg: protobuf.MessageType) -> protobuf.MessageType:
-        global PROCESS_REPORTER
+        global PROCESS_REPORTER, HTTP, OFFSET
         LOG.debug(
             f"sending message: {msg.__class__.__name__}",
             extra={"protobuf": msg},
@@ -247,8 +250,12 @@ class ProtocolV1(Protocol):
         # split buffer into 64 bytes one package to send
         origin = len(buffer)
         send_len = 0 - len(header) - 2
+        if HTTP and OFFSET:
+            send_len = OFFSET
+            origin = TOTAL
         while buffer:
             chunk = bytearray()
+            # used for android update progress bar
             if PROCESS_REPORTER and origin >= 64:
                 left = round(len(buffer) / origin, 2)
                 PROCESS_REPORTER.publishProgress(int((1 - left) * 100))
@@ -257,7 +264,6 @@ class ProtocolV1(Protocol):
                 if send_len >= 64 * 1024:
                     send_len = send_len - 64 * 1024
                     time.sleep(1)
-
             # Report ID, data padded to 63 bytes
             chunk.extend(b"?" + buffer[: REPLEN - 1])
             chunk = chunk.ljust(REPLEN, b"\x00")
@@ -271,7 +277,7 @@ class ProtocolV1(Protocol):
                 print(f"unknown response {response}")
                 raise BaseException("Unexpected response")
         print(f"send in nfc #**")
-        response = self.handle.write_chunk_nfc(bytearray(b'#**'))
+        response = b'#**'
         while response == b'#**':
             response = self.handle.write_chunk_nfc(bytearray(b'#**'))
         if response[:3] != b"?##":
