@@ -36,7 +36,7 @@ class CustomerUI:
             elif wait_seconds >= 60:
                 raise BaseException("waiting pin timeout")
             else:
-                time.sleep(0.001)
+                time.sleep(0.0001)
 
 
     @classmethod
@@ -82,11 +82,12 @@ class CustomerUI:
             elif wait_seconds >= 60:
                 raise BaseException("waiting passphrase timeout")
             else:
-                time.sleep(0.001)
+                time.sleep(0.0001)
             #
 
     @classmethod
     def button_request(cls, code):
+        cls.handler.sendEmptyMessage(9)
         return
 
     def finished(self):

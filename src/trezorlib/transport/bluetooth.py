@@ -8,6 +8,7 @@ from cn.com.heaton.blelibrary.ble.callback import BleWriteCallback
 from cn.com.heaton.blelibrary.ble import Ble
 from cn.com.heaton.blelibrary.ble.model import BleDevice
 
+WRITE_SUCCESS = True
 
 
 class BlueToothHandler(Handle):
@@ -18,7 +19,6 @@ class BlueToothHandler(Handle):
     RESPONSE = bytes()  # type: bytes
 
     def __init__(self) -> None:
-        self.retry_count = 3
         pass
 
     def open(self) -> None:
@@ -28,20 +28,20 @@ class BlueToothHandler(Handle):
         pass
 
     def write_chunk(self, chunk: bytes) -> None:
+        global WRITE_SUCCESS
         assert self.BLE is not None, "the bluetooth device is not available"
         chunks = binascii.unhexlify(bytes(chunk).hex())
-        # if len(chunks) != 64:
-        #     raise TransportException("Unexpected data length")
-        count = 0
-        success = False
-        while count < self.retry_count and not success:
-            success = self.BLE.write(self.BLE_DEVICE, chunks, self.CALL_BACK)
-            if not success:
-                count = count + 1
-                time.sleep(1.15 * count)
-        print(f"send {success}=====try: {count}")
-        if not success:
-            raise BaseException("send failed")
+        while True:
+            if WRITE_SUCCESS:
+                WRITE_SUCCESS = False
+                success = self.BLE.write(self.BLE_DEVICE, chunks, self.CALL_BACK)
+                if success:
+                    return
+                else:
+                    raise BaseException("send failed")
+
+            else:
+                time.sleep(0.0001)
 
     @classmethod
     def read_ble(cls) -> bytes:

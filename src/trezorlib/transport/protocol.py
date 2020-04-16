@@ -175,27 +175,16 @@ class ProtocolV1(Protocol):
         header = struct.pack(">HL", mapping.get_type(msg), len(ser))
         buffer = bytearray(b"##" + header + ser)
         origin = len(buffer)
-        send_len = 0 - len(header) - 2
         while buffer:
             if PROCESS_REPORTER and origin >= 64:
                 left = round(len(buffer) / origin, 2)
                 PROCESS_REPORTER.publishProgress(int((1 - left) * 100))
                 if len(buffer) <= 64:
                     PROCESS_REPORTER = None
-                if send_len >= 64 * 1024:
-                    # resp = self.ble_read()
-                    # if isinstance(resp, messages.Success):
-                    #     send_len = send_len - 64 * 1024
-                    # else:
-                    #     raise BaseException("update failed")
-                    time.sleep(1)
-                    send_len = send_len - 64 * 1024
             # Report ID, data padded to 63 bytes
             chunk = b"?" + buffer[: REPLEN - 1]
             chunk = chunk.ljust(REPLEN, b"\x00")
-            time.sleep(0.002)
             self.handle.write_chunk(chunk)
-            send_len = send_len + 63
             buffer = buffer[63:]
 
     def write_ble(self, msg: protobuf.MessageType) -> None:
@@ -211,16 +200,12 @@ class ProtocolV1(Protocol):
         header = struct.pack(">HL", mapping.get_type(msg), len(ser))
         buffer = bytearray(b"##" + header + ser)
         origin = len(buffer)
-        send_len = 0 - len(header) - 2
         while buffer:
             if PROCESS_REPORTER and origin >= 64:
                 left = round(len(buffer) / origin, 2)
                 PROCESS_REPORTER.publishProgress(int((1 - left) * 100))
                 if len(buffer) <= 64:
                     PROCESS_REPORTER = None
-                if send_len >= 64 * 1024:
-                    time.sleep(1)
-                    send_len = send_len - 64 * 1024
             # Report ID, data padded to 63 bytes
             waiting_packets = buffer[:189]
             send_packets = []
@@ -229,10 +214,7 @@ class ProtocolV1(Protocol):
                 chunk = chunk.ljust(REPLEN, b"\x00")
                 send_packets.extend(chunk)
                 waiting_packets = waiting_packets[63:]
-            time.sleep(0.005)
-            print(f"send in ble =={bytes(send_packets).hex()}")
             self.handle.write_chunk(bytes(send_packets))
-            send_len = send_len + 189
             buffer = buffer[189:]
 
     def nfc_send(self, msg: protobuf.MessageType) -> protobuf.MessageType:
@@ -248,30 +230,26 @@ class ProtocolV1(Protocol):
         buffer = bytearray(b"##" + header + ser)
         # split buffer into 64 bytes one package to send
         origin = len(buffer)
-        send_len = 0 - len(header) - 2
         if HTTP and OFFSET:
-            send_len = OFFSET
             origin = TOTAL
         while buffer:
-            chunk = bytearray()
             # used for android update progress bar
             if PROCESS_REPORTER and origin >= 64:
                 left = round(len(buffer) / origin, 2)
                 PROCESS_REPORTER.publishProgress(int((1 - left) * 100))
                 if len(buffer) <= 64:
                     PROCESS_REPORTER = None
-                if send_len >= 64 * 1024:
-                    send_len = send_len - 64 * 1024
-                    time.sleep(1)
             # Report ID, data padded to 63 bytes
-            chunk.extend(b"?" + buffer[: REPLEN - 1])
-            chunk = chunk.ljust(REPLEN, b"\x00")
-            print(f"send in nfc {bytes(chunk).hex()}")
-            response = self.handle.write_chunk_nfc(chunk)
-            print(f"receive ==== {response}")
+            waiting_packets = buffer[:2205]
+            send_packets = bytearray()
+            while waiting_packets:
+                chunk = b"?" + waiting_packets[: REPLEN - 1]
+                chunk = chunk.ljust(REPLEN, b"\x00")
+                send_packets.extend(chunk)
+                waiting_packets = waiting_packets[63:]
+            response = self.handle.write_chunk_nfc(send_packets)
             if response == b'\x90\x00':
-                send_len = send_len + 63
-                buffer = buffer[63:]
+                buffer = buffer[2205:]
             else:
                 print(f"unknown response {response}")
                 raise BaseException("Unexpected response")

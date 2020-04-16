@@ -212,6 +212,7 @@ class TrezorClient:
         __tracebackhide__ = True  # for pytest # pylint: disable=W0612
         # do this raw - send ButtonAck first, notify UI later
         if self.transport.get_path() == "nfc":
+            self.ui.button_request(msg.code)
             return self._raw_write(messages.ButtonAck())
         else:
             self.ui.button_request(msg.code)
