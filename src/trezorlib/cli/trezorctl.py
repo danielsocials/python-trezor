@@ -2018,6 +2018,30 @@ def webauthn_add_credential(connect, hex_credential_id):
 def webauthn_remove_credential(connect, index):
     return webauthn.remove_credential(connect(), index)
 
+#
+# BixinKey
+#
+
+@cli.command(help="Enable se.")
+@click.pass_obj
+def enable_se(connect):
+    return device.apply_settings(connect(), use_se=True)
+
+@cli.command(help="Enable ble.")
+@click.pass_obj
+def enable_ble(connect):
+    return device.apply_settings(connect(), use_ble=True)
+
+@cli.command(help="Enable fee pay.")
+@click.pass_obj
+def enable_fee_pay(connect):
+    return device.apply_settings(connect(), use_fee_pay=True)
+ 
+@cli.command(help="Enable fee pay.")
+@click.pass_obj
+def enable_exportseeds(connect):
+    return device.apply_settings(connect(), use_exportseeds=True)
+
 
 #
 # Main
