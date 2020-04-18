@@ -27,7 +27,7 @@ def read(*path):
 
 
 def find_version():
-    version_file = read("src", "trezorlibs", "__init__.py")
+    version_file = read("src", "trezorlib", "__init__.py")
     version_match = re.search(r"^__version__ = \"(.*)\"$", version_file, re.M)
     if version_match:
         return version_match.group(1)
