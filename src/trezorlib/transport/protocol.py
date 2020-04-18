@@ -21,7 +21,6 @@ import time
 from io import BytesIO
 from typing import Tuple
 from typing_extensions import Protocol as StructuralType
-from android.os import AsyncTask
 from .. import mapping, protobuf, messages
 from ..log import DUMP_BYTES
 from . import Transport
