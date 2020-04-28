@@ -183,3 +183,6 @@ WebAuthnListResidentCredentials = 800
 WebAuthnCredentials = 801
 WebAuthnAddResidentCredential = 802
 WebAuthnRemoveResidentCredential = 803
+BixinSeedOperate = 901  # type: Literal[901]
+BixinMessageSE = 902  # type: Literal[902]
+BixinUpgrade = 903  # type: Literal[903]

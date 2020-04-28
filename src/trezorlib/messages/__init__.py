@@ -17,6 +17,10 @@ from .BinanceSignTx import BinanceSignTx
 from .BinanceSignedTx import BinanceSignedTx
 from .BinanceTransferMsg import BinanceTransferMsg
 from .BinanceTxRequest import BinanceTxRequest
+from .BixinGetMessageSE import BixinGetMessageSE
+from .BixinMessageSE import BixinMessageSE
+from .BixinSeedExportData import BixinSeedExportData
+from .BixinSeedOperate import BixinSeedOperate
 from .ButtonAck import ButtonAck
 from .ButtonRequest import ButtonRequest
 from .Cancel import Cancel
@@ -49,6 +53,7 @@ from .DebugLinkState import DebugLinkState
 from .DebugLinkStop import DebugLinkStop
 from .DebugMoneroDiagAck import DebugMoneroDiagAck
 from .DebugMoneroDiagRequest import DebugMoneroDiagRequest
+from .ExportType import ExportType
 from .ECDHSessionKey import ECDHSessionKey
 from .Entropy import Entropy
 from .EntropyAck import EntropyAck
@@ -203,6 +208,7 @@ from .RipplePayment import RipplePayment
 from .RippleSignTx import RippleSignTx
 from .RippleSignedTx import RippleSignedTx
 from .SdProtect import SdProtect
+from .SeedRequestType import SeedRequestType
 from .SelfTest import SelfTest
 from .SetU2FCounter import SetU2FCounter
 from .SignIdentity import SignIdentity
