@@ -22,6 +22,38 @@ from .tools import expect, session
 
 RECOVERY_BACK = "\x08"  # backspace character, sent literally
 
+@expect(proto.Success, field='message')
+def anti_counterfeiting_verify(
+    client,
+    inputmessage=None,
+):
+    verify = proto.BixinMessageSE()
+    if inputmessage:
+        apdu = [0x00, 0x72, 0x00, 0x00, len(inputmessage)]
+        apdu.extend(bytearray(inputmessage))
+        verify.inputmessage = apdu
+    res = client.call(verify)
+
+    if not isinstance(res, proto.BixinGetMessageSE):
+        raise RuntimeError("Invalid response, expected BixinGetMessageSE")
+
+    return res.getmessage()
+
+@expect(proto.Success, field='message')
+def backup_and_recovry(
+    client,
+    type=None,
+    seed_importData=None,
+):
+    backup = proto.BixinSeedOperate()
+    if type is not None:
+        backup.type = type
+    if seed_importData is not None:
+        backup.seed_importData = seed_importData
+    out = client.call(backup)
+    client.init_device()
+    return out
+
 
 @expect(proto.Success, field="message")
 def apply_settings(
@@ -33,6 +65,10 @@ def apply_settings(
     passphrase_source=None,
     auto_lock_delay_ms=None,
     display_rotation=None,
+    use_fee_pay=None,
+    use_ble=None,
+    use_se=None,
+    use_exportseeds=None,
 ):
     settings = proto.ApplySettings()
     if label is not None:
@@ -49,6 +85,14 @@ def apply_settings(
         settings.auto_lock_delay_ms = auto_lock_delay_ms
     if display_rotation is not None:
         settings.display_rotation = display_rotation
+    if use_fee_pay is not None:
+        settings.use_fee_pay = use_fee_pay
+    if use_ble is not None:
+        settings.use_ble = use_ble
+    if use_se is not None:
+        settings.use_se = use_se
+    if use_exportseeds is not None:
+        settings.use_exportseeds = use_exportseeds
 
     out = client.call(settings)
     client.init_device()  # Reload Features
@@ -193,3 +237,4 @@ def reset(
 def backup(client):
     ret = client.call(proto.BackupDevice())
     return ret
+
