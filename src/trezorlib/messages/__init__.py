@@ -21,6 +21,7 @@ from .BixinGetMessageSE import BixinGetMessageSE
 from .BixinMessageSE import BixinMessageSE
 from .BixinSeedExportData import BixinSeedExportData
 from .BixinSeedOperate import BixinSeedOperate
+from .BixinUpgrade import BixinUpgrade
 from .ButtonAck import ButtonAck
 from .ButtonRequest import ButtonRequest
 from .Cancel import Cancel
@@ -53,7 +54,6 @@ from .DebugLinkState import DebugLinkState
 from .DebugLinkStop import DebugLinkStop
 from .DebugMoneroDiagAck import DebugMoneroDiagAck
 from .DebugMoneroDiagRequest import DebugMoneroDiagRequest
-from .ExportType import ExportType
 from .ECDHSessionKey import ECDHSessionKey
 from .Entropy import Entropy
 from .EntropyAck import EntropyAck
@@ -208,7 +208,6 @@ from .RipplePayment import RipplePayment
 from .RippleSignTx import RippleSignTx
 from .RippleSignedTx import RippleSignedTx
 from .SdProtect import SdProtect
-from .SeedRequestType import SeedRequestType
 from .SelfTest import SelfTest
 from .SetU2FCounter import SetU2FCounter
 from .SignIdentity import SignIdentity
@@ -270,6 +269,7 @@ from . import BinanceTimeInForce
 from . import ButtonRequestType
 from . import Capability
 from . import DebugSwipeDirection
+from . import ExportType
 from . import FailureType
 from . import InputScriptType
 from . import LiskTransactionType
@@ -284,6 +284,7 @@ from . import PinMatrixRequestType
 from . import RecoveryDeviceType
 from . import RequestType
 from . import SdProtectOperationType
+from . import SeedRequestType
 from . import TezosBallotType
 from . import TezosContractType
 from . import WordRequestType
