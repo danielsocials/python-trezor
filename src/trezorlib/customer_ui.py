@@ -14,10 +14,11 @@ class CustomerUI:
     user_cancel = 0
     pass_state = 0
     handler = None  # type: Handler
-
+    # this method must be classmethod in order to get  Memory consistency
     @classmethod
     def get_pin(cls, code) -> str:
         cls.code = code
+        cls.pin = ''
         if cls.handler:
             if code == 'Enter a new PIN for your Trezor:':
                 cls.handler.sendEmptyMessage(2)
@@ -58,6 +59,7 @@ class CustomerUI:
     @classmethod
     def get_passphrase(cls, msg) -> str:
         cls.code = msg
+        cls.passphrase = ''
         if cls.pass_state == 0:
             return ''
         cls.pass_state = 0

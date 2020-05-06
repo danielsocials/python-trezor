@@ -22,10 +22,11 @@ from .tools import expect, session
 
 RECOVERY_BACK = "\x08"  # backspace character, sent literally
 
+
 @expect(proto.Success, field='message')
 def anti_counterfeiting_verify(
-    client,
-    inputmessage=None,
+        client,
+        inputmessage=None,
 ):
     verify = proto.BixinMessageSE()
     if inputmessage:
@@ -39,11 +40,12 @@ def anti_counterfeiting_verify(
 
     return res.getmessage()
 
+
 @expect(proto.Success, field='message')
 def backup_and_recovry(
-    client,
-    type=None,
-    seed_importData=None,
+        client,
+        type=None,
+        seed_importData=None,
 ):
     backup = proto.BixinSeedOperate()
     if type is not None:
@@ -69,7 +71,7 @@ def apply_settings(
     use_ble=None,
     use_se=None,
     use_exportseeds=None,
-    is_bixinapp=True,
+    is_bixinapp=None,
 ):
     settings = proto.ApplySettings()
     if label is not None:
@@ -95,7 +97,7 @@ def apply_settings(
     if use_exportseeds is not None:
         settings.use_exportseeds = use_exportseeds
     if is_bixinapp is not None:
-        settings.is_bixinapp = is_bixinapp
+        settings.is_bixinapp = bool(is_bixinapp)
 
     out = client.call(settings)
     client.init_device()  # Reload Features
@@ -136,16 +138,16 @@ def wipe(client):
 
 
 def recover(
-    client,
-    word_count=24,
-    passphrase_protection=True,
-    pin_protection=True,
-    label=None,
-    language="english",
-    input_callback=None,
-    type=proto.RecoveryDeviceType.ScrambledWords,
-    dry_run=False,
-    u2f_counter=None,
+        client,
+        word_count=24,
+        passphrase_protection=True,
+        pin_protection=True,
+        label=None,
+        language="english",
+        input_callback=None,
+        type=proto.RecoveryDeviceType.ScrambledWords,
+        dry_run=False,
+        u2f_counter=None,
 ):
     if client.features.model == "1" and input_callback is None:
         raise RuntimeError("Input callback required for Trezor One")
@@ -240,4 +242,3 @@ def reset(
 def backup(client):
     ret = client.call(proto.BackupDevice())
     return ret
-

@@ -267,53 +267,6 @@ class ProtocolV1(Protocol):
         print(f"receive response :{protobuf.load_message(BytesIO(response[3 + headerlen:]), mapping.get_class(msg_type))}")
         return protobuf.load_message(BytesIO(response[3 + headerlen:]), mapping.get_class(msg_type))
 
-        """
-        feitian do split but send onece
-        """
-        # buffer = bytearray(b"##" + header + ser)
-        # chunk = bytearray()
-        # while buffer:
-        #     # Report ID, data padded to 63 bytes
-        #     chunk.extend(b"?" + buffer[: REPLEN - 1])
-        #     buffer = buffer[63:]
-        # LOG.log(DUMP_BYTES, f"the final bytes sending to hardware: {chunk}")
-        # response = self.handle.write_chunk_nfc(chunk)
-        # if response[:3] != b"?##":
-        #     raise RuntimeError("Unexpected magic characters")
-        # try:
-        #     headerlen = struct.calcsize(">HL")
-        #     msg_type, data_len = struct.unpack(">HL", response[3: 3 + headerlen])
-        # except Exception:
-        #         raise RuntimeError("Cannot parse header")
-        # clear_response = bytearray()
-        # clear_response.extend(response[3+headerlen:64])
-        # response = response[65:]
-        # while response:
-        #     clear_response.extend(response[:62])
-        #     response = response[63:]
-        # clear_response = clear_response[:data_len]
-        # return protobuf.load_message(BytesIO(clear_response), mapping.get_class(msg_type))
-        """
-            old do not split
-        """
-        # buffer = bytearray(b"?##" + header + ser)
-        # print(f"send in nfc ====={bytes(buffer).hex()}")
-        # try:
-        #     response = self.handle.write_chunk_nfc(buffer)
-        # except BaseException as e:
-        #     raise e
-        # while response == b"#**":
-        #     response = self.handle.write_chunk_nfc(bytearray(b"#**"))
-        # if response[:3] != b"?##":
-        #      raise RuntimeError("Unexpected magic characters")
-        # try:
-        #     print(f"receive response in nfc ==== {response}")
-        #     headerlen = struct.calcsize(">HL")
-        #     msg_type, _ = struct.unpack(">HL", response[3: 3 + headerlen])
-        # except Exception:
-        #     raise RuntimeError("Cannot parse header")
-        # return protobuf.load_message(BytesIO(response[3+headerlen:]), mapping.get_class(msg_type))
-
     def ble_read(self) -> protobuf.MessageType:
         response = self.handle.read_ble()
         if response[:3] != b"?##":
