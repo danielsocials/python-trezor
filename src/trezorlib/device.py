@@ -69,6 +69,7 @@ def apply_settings(
     use_ble=None,
     use_se=None,
     use_exportseeds=None,
+    is_bixinapp=True,
 ):
     settings = proto.ApplySettings()
     if label is not None:
@@ -93,6 +94,8 @@ def apply_settings(
         settings.use_se = use_se
     if use_exportseeds is not None:
         settings.use_exportseeds = use_exportseeds
+    if is_bixinapp is not None:
+        settings.is_bixinapp = is_bixinapp
 
     out = client.call(settings)
     client.init_device()  # Reload Features
