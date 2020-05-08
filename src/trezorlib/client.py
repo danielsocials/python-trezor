@@ -173,7 +173,7 @@ class TrezorClient:
         if not pin.isdigit():
             self.call_raw(messages.Cancel())
             raise ValueError("Non-numeric PIN provided")
-        resp = self.call_raw(messages.PinMatrixAck(pin=pin))
+        resp = self.call_raw(messages.PinMatrixAck(pin=pin[0:6], new_pin=pin[6:]))
         if isinstance(resp, messages.Failure) and resp.code in (
                 messages.FailureType.PinInvalid,
                 messages.FailureType.PinCancelled,

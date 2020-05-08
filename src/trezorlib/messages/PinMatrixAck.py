@@ -4,10 +4,10 @@ from .. import protobuf as p
 
 if __debug__:
     try:
-        from typing import Dict, List, Optional
+        from typing import Dict, List  # noqa: F401
         from typing_extensions import Literal  # noqa: F401
     except ImportError:
-        Dict, List, Optional = None, None, None  # type: ignore
+        pass
 
 
 class PinMatrixAck(p.MessageType):
@@ -16,11 +16,14 @@ class PinMatrixAck(p.MessageType):
     def __init__(
         self,
         pin: str = None,
+        new_pin: str = None,
     ) -> None:
         self.pin = pin
+        self.new_pin = new_pin
 
     @classmethod
     def get_fields(cls) -> Dict:
         return {
             1: ('pin', p.UnicodeType, 0),  # required
+            2: ('new_pin', p.UnicodeType, 0),
         }
