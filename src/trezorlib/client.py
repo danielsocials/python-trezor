@@ -241,7 +241,7 @@ class TrezorClient:
     def init_device(self):
         resp = self.call_raw(messages.Initialize(state=self.state))
         if not isinstance(resp, messages.Features):
-            self.cancel()
+            # self.cancel()
             raise exceptions.TrezorException("Unexpected initial response")
         else:
             self.features = resp
