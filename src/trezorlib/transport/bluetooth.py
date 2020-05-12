@@ -29,6 +29,7 @@ class BlueToothHandler(Handle):
 
     def write_chunk(self, chunk: bytes) -> None:
         global WRITE_SUCCESS
+        global RESPONSE
         assert self.BLE is not None, "the bluetooth device is not available"
         chunks = binascii.unhexlify(bytes(chunk).hex())
         while True:
@@ -36,6 +37,7 @@ class BlueToothHandler(Handle):
                 WRITE_SUCCESS = False
                 success = self.BLE.write(self.BLE_DEVICE, chunks, self.CALL_BACK)
                 if success:
+                    RESPONSE = bytes()
                     return
                 else:
                     raise BaseException("send failed")
