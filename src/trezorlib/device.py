@@ -64,14 +64,16 @@ def apply_settings(
     language=None,
     use_passphrase=None,
     homescreen=None,
-    passphrase_always_on_device=None,
     auto_lock_delay_ms=None,
     display_rotation=None,
-    use_fee_pay=None,
-    use_ble=None,
-    use_se=None,
-    use_exportseeds=None,
-    is_bixinapp=None,
+    passphrase_always_on_device: bool = None,
+    fee_pay_pin: bool = None,
+    use_ble: bool = None,
+    use_se: bool = None,
+    is_bixinapp: bool = None,
+    fee_pay_confirm: bool = None,
+    fee_pay_money_limit: int = None,
+    fee_pay_times: int = None,
 ):
     settings = proto.ApplySettings()
     if label is not None:
@@ -88,16 +90,20 @@ def apply_settings(
         settings.auto_lock_delay_ms = auto_lock_delay_ms
     if display_rotation is not None:
         settings.display_rotation = display_rotation
-    if use_fee_pay is not None:
-        settings.use_fee_pay = use_fee_pay
     if use_ble is not None:
         settings.use_ble = use_ble
     if use_se is not None:
         settings.use_se = use_se
-    if use_exportseeds is not None:
-        settings.use_exportseeds = use_exportseeds
     if is_bixinapp is not None:
-        settings.is_bixinapp = bool(is_bixinapp)
+        settings.is_bixinapp = is_bixinapp
+    if fee_pay_pin is not None:
+        settings.fee_pay_pin = fee_pay_pin
+    if fee_pay_confirm is not None:
+        settings.fee_pay_confirm = fee_pay_confirm
+    if fee_pay_money_limit is not None:
+        settings.fee_pay_money_limit = fee_pay_money_limit
+    if fee_pay_times is not None:
+        settings.fee_pay_times = fee_pay_times
 
     out = client.call(settings)
     client.init_device()  # Reload Features
@@ -134,6 +140,12 @@ def set_u2f_counter(client, u2f_counter):
 def wipe(client):
     ret = client.call(proto.WipeDevice())
     client.init_device()
+    return ret
+
+
+@expect(messages.Success, field="message")
+def reboot(client):
+    ret = client.call(messages.BixinUpgrade())
     return ret
 
 
@@ -241,4 +253,22 @@ def reset(
 @expect(proto.Success, field="message")
 def backup(client):
     ret = client.call(proto.BackupDevice())
+    return ret
+
+
+@expect(messages.BixinBackupAck, field="data")
+def se_backup(client):
+    ret = client.call(messages.BixinBackupRequest())
+    return ret
+
+
+@expect(messages.Success, field="message")
+def se_restore(client, data):
+    ret = client.call(messages.BixinRestoreRequest(data=data))
+    return ret
+
+
+@expect(messages.BixinVerifyDeviceAck, field="data")
+def se_verify(client, data):
+    ret = client.call(messages.BixinVerifyDeviceRequest(data=data))
     return ret
