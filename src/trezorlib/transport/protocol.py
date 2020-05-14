@@ -247,6 +247,7 @@ class ProtocolV1(Protocol):
                 chunk = chunk.ljust(REPLEN, b"\x00")
                 send_packets.extend(chunk)
                 waiting_packets = waiting_packets[63:]
+            print(f"send in nfc {bytes(send_packets).hex()}")
             response = self.handle.write_chunk_nfc(send_packets)
             if response == b'\x90\x00':
                 buffer = buffer[2205:]
@@ -270,12 +271,15 @@ class ProtocolV1(Protocol):
     def ble_read(self) -> protobuf.MessageType:
         response = self.handle.read_ble()
         if response[:3] != b"?##":
-             raise RuntimeError("Unexpected magic characters")
+            raise RuntimeError("Unexpected magic characters")
         try:
             headerlen = struct.calcsize(">HL")
-            msg_type, _ = struct.unpack(">HL", response[3: 3 + headerlen])
+            msg_type, data_len = struct.unpack(">HL", response[3: 3 + headerlen])
+            while data_len > 235:
+                data_len -= 244
+                response += self.handle.read_ble()
         except Exception:
-            raise RuntimeError("Cannot parse header")
+            raise RuntimeError(f"Cannot parse header")
         print(f"receive response in BLE ===={protobuf.load_message(BytesIO(response[3+headerlen:]), mapping.get_class(msg_type))}")
         return protobuf.load_message(BytesIO(response[3+headerlen:]), mapping.get_class(msg_type))
 
