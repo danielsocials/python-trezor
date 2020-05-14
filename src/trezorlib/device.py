@@ -23,40 +23,6 @@ from .tools import expect, session
 RECOVERY_BACK = "\x08"  # backspace character, sent literally
 
 
-@expect(proto.Success, field='message')
-def anti_counterfeiting_verify(
-        client,
-        inputmessage=None,
-):
-    verify = proto.BixinprotoE()
-    if inputmessage:
-        apdu = [0x00, 0x72, 0x00, 0x00, len(inputmessage)]
-        apdu.extend(bytearray(inputmessage))
-        verify.inputmessage = apdu
-    res = client.call(verify)
-
-    if not isinstance(res, proto.BixinGetprotoE):
-        raise RuntimeError("Invalid response, expected BixinGetprotoE")
-
-    return res.getmessage()
-
-
-@expect(proto.Success, field='message')
-def backup_and_recovry(
-        client,
-        type=None,
-        seed_importData=None,
-):
-    backup = proto.BixinSeedOperate()
-    if type is not None:
-        backup.type = type
-    if seed_importData is not None:
-        backup.seed_importData = seed_importData
-    out = client.call(backup)
-    client.init_device()
-    return out
-
-
 @expect(proto.Success, field="message")
 def apply_settings(
     client,
