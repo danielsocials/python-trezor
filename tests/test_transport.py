@@ -15,12 +15,10 @@
 # If not, see <https://www.gnu.org/licenses/lgpl-3.0.html>.
 
 import importlib
-# noinspection PyInterpreter
 from unittest import mock
 
 from trezorlib.transport import all_transports
 from trezorlib.transport.bridge import BridgeTransport
-from trezorlib.transport.nfc import NFCTransport
 
 
 def test_disabled_transport():
@@ -38,13 +36,11 @@ def test_import_all_transports():
     from trezorlib.transport.hid import HidTransport
     from trezorlib.transport.webusb import WebUsbTransport
     from trezorlib.transport.udp import UdpTransport
-    from trezorlib.transport.nfc import NFCTransport
 
     assert BridgeTransport
     assert HidTransport
     assert WebUsbTransport
     assert UdpTransport
-    assert NFCTransport
 
 
 def test_transport_dependencies():

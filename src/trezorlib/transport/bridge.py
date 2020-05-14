@@ -152,20 +152,20 @@ class BridgeTransport(Transport):
         self._call("release")
         self.session = None
 
-    def write(self, msg: protobuf.MessageType) -> None:
+    def write(self, message_type: int, message_data: bytes) -> None:
         LOG.debug(
             "sending message: {}".format(msg.__class__.__name__),
             extra={"protobuf": msg},
         )
         buffer = BytesIO()
-        protobuf.dump_message(buffer, msg)
+        protobuf.dump_message(buffer, message_data)
         ser = buffer.getvalue()
         LOG.log(DUMP_BYTES, "sending bytes: {}".format(ser.hex()))
         header = struct.pack(">HL", mapping.get_type(msg), len(ser))
 
         self.handle.write_buf(header + ser)
 
-    def read(self) -> protobuf.MessageType:
+    def read(self) -> MessagePayload:
         data = self.handle.read_buf()
         headerlen = struct.calcsize(">HL")
         msg_type, datalen = struct.unpack(">HL", data[:headerlen])

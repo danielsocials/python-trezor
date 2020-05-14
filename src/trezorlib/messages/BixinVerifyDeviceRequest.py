@@ -10,16 +10,17 @@ if __debug__:
         pass
 
 
-class BixinSeedExportData(p.MessageType):
+class BixinVerifyDeviceRequest(p.MessageType):
+    MESSAGE_WIRE_TYPE = 909
 
     def __init__(
         self,
-        seed_exportdata: str = None,
+        data: bytes = None,
     ) -> None:
-        self.seed_exportdata = seed_exportdata
+        self.data = data
 
     @classmethod
     def get_fields(cls) -> Dict:
         return {
-            1: ('seed_exportdata', p.UnicodeType, 0),
+            1: ('data', p.BytesType, 0),  # required
         }

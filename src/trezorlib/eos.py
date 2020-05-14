@@ -16,8 +16,8 @@
 
 from datetime import datetime
 
-from . import messages
-from .tools import CallException, b58decode, expect, session
+from . import exceptions, messages
+from .tools import b58decode, expect, session
 
 
 def name_to_number(name):
@@ -144,7 +144,7 @@ def parse_sell_ram(data):
 
 def parse_delegate(data):
     return messages.EosActionDelegate(
-        sender=name_to_number(data["sender"]),
+        sender=name_to_number(data["from"]),
         receiver=name_to_number(data["receiver"]),
         net_quantity=parse_asset(data["stake_net_quantity"]),
         cpu_quantity=parse_asset(data["stake_cpu_quantity"]),
@@ -154,7 +154,7 @@ def parse_delegate(data):
 
 def parse_undelegate(data):
     return messages.EosActionUndelegate(
-        sender=name_to_number(data["sender"]),
+        sender=name_to_number(data["from"]),
         receiver=name_to_number(data["receiver"]),
         net_quantity=parse_asset(data["unstake_net_quantity"]),
         cpu_quantity=parse_asset(data["unstake_cpu_quantity"]),
@@ -337,12 +337,13 @@ def sign_tx(client, address, transaction, chain_id):
             response = client.call(actions.pop(0))
     except IndexError:
         # pop from empty list
-        raise CallException(
-            "Eos.UnexpectedEndOfOperations",
-            "Reached end of operations without a signature.",
+        raise exceptions.TrezorException(
+            "Reached end of operations without a signature."
         ) from None
 
     if not isinstance(response, messages.EosSignedTx):
-        raise CallException(messages.FailureType.UnexpectedMessage, response)
+        raise exceptions.TrezorException(
+            "Unexpected message: {}".format(response.__class__.__name__)
+        )
 
     return response

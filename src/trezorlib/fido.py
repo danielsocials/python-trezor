@@ -1,6 +1,6 @@
 # This file is part of the Trezor project.
 #
-# Copyright (C) 2019 SatoshiLabs and contributors
+# Copyright (C) 2012-2019 SatoshiLabs and contributors
 #
 # This library is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License version 3
@@ -14,21 +14,30 @@
 # You should have received a copy of the License along with this library.
 # If not, see <https://www.gnu.org/licenses/lgpl-3.0.html>.
 
-
-from . import messages as proto
+from . import messages
 from .tools import expect
 
 
-@expect(proto.WebAuthnCredentials, field="credentials")
+@expect(messages.WebAuthnCredentials, field="credentials")
 def list_credentials(client):
-    return client.call(proto.WebAuthnListResidentCredentials())
+    return client.call(messages.WebAuthnListResidentCredentials())
 
 
-@expect(proto.Success, field="message")
+@expect(messages.Success, field="message")
 def add_credential(client, credential_id):
-    return client.call(proto.WebAuthnAddResidentCredential(credential_id))
+    return client.call(messages.WebAuthnAddResidentCredential(credential_id))
 
 
-@expect(proto.Success, field="message")
+@expect(messages.Success, field="message")
 def remove_credential(client, index):
-    return client.call(proto.WebAuthnRemoveResidentCredential(index))
+    return client.call(messages.WebAuthnRemoveResidentCredential(index))
+
+
+@expect(messages.Success, field="message")
+def set_counter(client, u2f_counter):
+    return client.call(messages.SetU2FCounter(u2f_counter=u2f_counter))
+
+
+@expect(messages.NextU2FCounter, field="u2f_counter")
+def get_next_counter(client):
+    return client.call(messages.GetNextU2FCounter())

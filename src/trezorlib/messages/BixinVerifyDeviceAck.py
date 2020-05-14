@@ -10,16 +10,17 @@ if __debug__:
         pass
 
 
-class BixinGetMessageSE(p.MessageType):
+class BixinVerifyDeviceAck(p.MessageType):
+    MESSAGE_WIRE_TYPE = 910
 
     def __init__(
         self,
-        getmessage: str = None,
+        data: bytes = None,
     ) -> None:
-        self.getmessage = getmessage
+        self.data = data
 
     @classmethod
     def get_fields(cls) -> Dict:
         return {
-            1: ('getmessage', p.UnicodeType, 0),
+            1: ('data', p.BytesType, 0),  # required
         }

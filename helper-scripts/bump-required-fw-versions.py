@@ -5,7 +5,7 @@ import requests
 RELEASES_URL = "https://beta-wallet.trezor.io/data/firmware/{}/releases.json"
 MODELS = ("1", "T")
 
-FILENAME = os.path.join(os.path.dirname(__file__), "..", "trezorlibs", "__init__.py")
+FILENAME = os.path.join(os.path.dirname(__file__), "..", "trezorlib", "__init__.py")
 START_LINE = "MINIMUM_FIRMWARE_VERSION = {\n"
 END_LINE = "}\n"
 

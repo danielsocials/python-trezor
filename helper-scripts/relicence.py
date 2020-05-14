@@ -24,8 +24,8 @@ SHEBANG_HEADER = """\
 
 """
 
-EXCLUDE_FILES = ["src/trezorlibs/__init__.py", "src/trezorlibs/_ed25519.py"]
-EXCLUDE_DIRS = ["src/trezorlibs/messages"]
+EXCLUDE_FILES = ["src/trezorlib/__init__.py", "src/trezorlib/_ed25519.py"]
+EXCLUDE_DIRS = ["src/trezorlib/messages"]
 
 
 def one_file(fp):

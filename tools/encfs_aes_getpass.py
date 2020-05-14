@@ -16,7 +16,7 @@ import trezorlib
 
 version_tuple = tuple(map(int, trezorlib.__version__.split(".")))
 if not (0, 11) <= version_tuple < (0, 12):
-    raise RuntimeError("trezorlibs version mismatch (0.11.x is required)")
+    raise RuntimeError("trezorlib version mismatch (0.11.x is required)")
 
 from trezorlib.client import TrezorClient
 from trezorlib.transport import enumerate_devices

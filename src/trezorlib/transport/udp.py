@@ -14,14 +14,21 @@
 # You should have received a copy of the License along with this library.
 # If not, see <https://www.gnu.org/licenses/lgpl-3.0.html>.
 
+import logging
 import socket
+import time
 from typing import Iterable, Optional, cast
 
+from ..log import DUMP_PACKETS
 from . import TransportException
-from .protocol import ProtocolBasedTransport, get_protocol, Handle
+from .protocol import ProtocolBasedTransport, ProtocolV1, Handle
+
+SOCKET_TIMEOUT = 10
+
+LOG = logging.getLogger(__name__)
 
 
-class UdpTransport(ProtocolBasedTransport, Handle):
+class UdpTransport(ProtocolBasedTransport):
 
     DEFAULT_HOST = "127.0.0.1"
     DEFAULT_PORT = 21324
@@ -39,8 +46,7 @@ class UdpTransport(ProtocolBasedTransport, Handle):
         self.device = (host, port)
         self.socket = None  # type: Optional[socket.socket]
 
-        protocol = get_protocol(self, want_v2=False)
-        super().__init__(protocol=protocol)
+        super().__init__(protocol=ProtocolV1(self))
 
     def get_path(self) -> str:
         return "{}:{}:{}".format(self.PATH_PREFIX, *self.device)
@@ -58,7 +64,7 @@ class UdpTransport(ProtocolBasedTransport, Handle):
                 return d
             else:
                 raise TransportException(
-                    "No Trezor device found at address {}".format(path)
+                    "No Trezor device found at address {}".format(d.get_path())
                 )
         finally:
             d.close()
@@ -82,10 +88,26 @@ class UdpTransport(ProtocolBasedTransport, Handle):
             path = path.replace("{}:".format(cls.PATH_PREFIX), "")
             return cls._try_path(path)
 
+    def wait_until_ready(self, timeout: float = 10) -> None:
+        try:
+            self.open()
+            self.socket.settimeout(0)
+            start = time.monotonic()
+            while True:
+                if self._ping():
+                    break
+                elapsed = time.monotonic() - start
+                if elapsed >= timeout:
+                    raise TransportException("Timed out waiting for connection.")
+
+                time.sleep(0.05)
+        finally:
+            self.close()
+
     def open(self) -> None:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.connect(self.device)
-        self.socket.settimeout(10)
+        self.socket.settimeout(SOCKET_TIMEOUT)
 
     def close(self) -> None:
         if self.socket is not None:
@@ -107,6 +129,7 @@ class UdpTransport(ProtocolBasedTransport, Handle):
         assert self.socket is not None
         if len(chunk) != 64:
             raise TransportException("Unexpected data length")
+        LOG.log(DUMP_PACKETS, "sending packet: {}".format(chunk.hex()))
         self.socket.sendall(chunk)
 
     def read_chunk(self) -> bytes:
@@ -118,6 +141,7 @@ class UdpTransport(ProtocolBasedTransport, Handle):
                 break
             except socket.timeout:
                 continue
+        LOG.log(DUMP_PACKETS, "received packet: {}".format(chunk.hex()))
         if len(chunk) != 64:
             raise TransportException("Unexpected chunk size: %d" % len(chunk))
         return bytearray(chunk)

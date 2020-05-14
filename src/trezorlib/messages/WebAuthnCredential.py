@@ -4,10 +4,10 @@ from .. import protobuf as p
 
 if __debug__:
     try:
-        from typing import Dict, List, Optional
+        from typing import Dict, List  # noqa: F401
         from typing_extensions import Literal  # noqa: F401
     except ImportError:
-        Dict, List, Optional = None, None, None  # type: ignore
+        pass
 
 
 class WebAuthnCredential(p.MessageType):
@@ -24,6 +24,8 @@ class WebAuthnCredential(p.MessageType):
         creation_time: int = None,
         hmac_secret: bool = None,
         use_sign_count: bool = None,
+        algorithm: int = None,
+        curve: int = None,
     ) -> None:
         self.index = index
         self.id = id
@@ -35,6 +37,8 @@ class WebAuthnCredential(p.MessageType):
         self.creation_time = creation_time
         self.hmac_secret = hmac_secret
         self.use_sign_count = use_sign_count
+        self.algorithm = algorithm
+        self.curve = curve
 
     @classmethod
     def get_fields(cls) -> Dict:
@@ -49,4 +53,6 @@ class WebAuthnCredential(p.MessageType):
             8: ('creation_time', p.UVarintType, 0),
             9: ('hmac_secret', p.BoolType, 0),
             10: ('use_sign_count', p.BoolType, 0),
+            11: ('algorithm', p.SVarintType, 0),
+            12: ('curve', p.SVarintType, 0),
         }

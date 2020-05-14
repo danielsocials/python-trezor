@@ -4,23 +4,23 @@ from .. import protobuf as p
 
 if __debug__:
     try:
-        from typing import Dict, List, Optional
+        from typing import Dict, List  # noqa: F401
         from typing_extensions import Literal  # noqa: F401
     except ImportError:
-        Dict, List, Optional = None, None, None  # type: ignore
+        pass
 
 
-class PassphraseStateRequest(p.MessageType):
-    MESSAGE_WIRE_TYPE = 77
+class DebugLinkRecordScreen(p.MessageType):
+    MESSAGE_WIRE_TYPE = 9003
 
     def __init__(
         self,
-        state: bytes = None,
+        target_directory: str = None,
     ) -> None:
-        self.state = state
+        self.target_directory = target_directory
 
     @classmethod
     def get_fields(cls) -> Dict:
         return {
-            1: ('state', p.BytesType, 0),
+            1: ('target_directory', p.UnicodeType, 0),
         }
