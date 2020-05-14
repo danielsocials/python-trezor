@@ -28,15 +28,15 @@ def anti_counterfeiting_verify(
         client,
         inputmessage=None,
 ):
-    verify = proto.BixinMessageSE()
+    verify = proto.BixinprotoE()
     if inputmessage:
         apdu = [0x00, 0x72, 0x00, 0x00, len(inputmessage)]
         apdu.extend(bytearray(inputmessage))
         verify.inputmessage = apdu
     res = client.call(verify)
 
-    if not isinstance(res, proto.BixinGetMessageSE):
-        raise RuntimeError("Invalid response, expected BixinGetMessageSE")
+    if not isinstance(res, proto.BixinGetprotoE):
+        raise RuntimeError("Invalid response, expected BixinGetprotoE")
 
     return res.getmessage()
 
@@ -143,9 +143,9 @@ def wipe(client):
     return ret
 
 
-@expect(messages.Success, field="message")
+@expect(proto.Success, field="message")
 def reboot(client):
-    ret = client.call(messages.BixinUpgrade())
+    ret = client.call(proto.BixinReboot())
     return ret
 
 
@@ -256,19 +256,19 @@ def backup(client):
     return ret
 
 
-@expect(messages.BixinBackupAck, field="data")
+@expect(proto.BixinBackupAck, field="data")
 def se_backup(client):
-    ret = client.call(messages.BixinBackupRequest())
+    ret = client.call(proto.BixinBackupRequest())
     return ret
 
 
-@expect(messages.Success, field="message")
+@expect(proto.Success, field="message")
 def se_restore(client, data):
-    ret = client.call(messages.BixinRestoreRequest(data=data))
+    ret = client.call(proto.BixinRestoreRequest(data=data))
     return ret
 
 
-@expect(messages.BixinVerifyDeviceAck, field="data")
+@expect(proto.BixinVerifyDeviceAck, field="data")
 def se_verify(client, data):
-    ret = client.call(messages.BixinVerifyDeviceRequest(data=data))
+    ret = client.call(proto.BixinVerifyDeviceRequest(data=data))
     return ret
