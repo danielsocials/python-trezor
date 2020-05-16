@@ -16,7 +16,7 @@ class BlueToothHandler(Handle):
     BLE_DEVICE = None  # type: BleDevice
     BLE_ADDRESS = ""  # type: str
     CALL_BACK = None  # type: BleWriteCallback
-    RESPONSE = bytes()  # type: bytes
+    RESPONSE = ''  # type: str
 
     def __init__(self) -> None:
         pass
@@ -37,7 +37,7 @@ class BlueToothHandler(Handle):
                 WRITE_SUCCESS = False
                 success = self.BLE.write(self.BLE_DEVICE, chunks, self.CALL_BACK)
                 if success:
-                    RESPONSE = bytes()
+                    RESPONSE = ''
                     return
                 else:
                     raise BaseException("send failed")
@@ -51,11 +51,13 @@ class BlueToothHandler(Handle):
         while True:
             wait_seconds = int(time.time()) - start
             if cls.RESPONSE:
-                new_response = bytes(cls.RESPONSE)
-                cls.RESPONSE = bytes()
+                new_response = bytes(binascii.unhexlify(cls.RESPONSE))
+                cls.RESPONSE = ''
                 return new_response
             elif wait_seconds >= 30:
                 raise BaseException("read ble response timeout")
+            else:
+                time.sleep(0.001)
 
 
 class BlueToothTransport(ProtocolBasedTransport):

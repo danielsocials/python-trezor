@@ -275,9 +275,9 @@ class ProtocolV1(Protocol):
         try:
             headerlen = struct.calcsize(">HL")
             msg_type, data_len = struct.unpack(">HL", response[3: 3 + headerlen])
-            while data_len > 235:
-                data_len -= 244
-                response += self.handle.read_ble()
+            # while data_len > 235:
+            #     data_len -= 244
+            #     response += self.handle.read_ble()
         except Exception:
             raise RuntimeError(f"Cannot parse header")
         print(f"receive response in BLE ===={protobuf.load_message(BytesIO(response[3+headerlen:]), mapping.get_class(msg_type))}")
