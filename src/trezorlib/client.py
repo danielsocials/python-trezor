@@ -129,6 +129,7 @@ class TrezorClient:
         self.session_counter += 1
 
     def close(self):
+        assert(self.session_counter == 1)
         if self.session_counter == 1:
             self.transport.end_session()
         self.session_counter -= 1

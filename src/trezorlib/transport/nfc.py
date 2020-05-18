@@ -22,6 +22,8 @@ class NFCHandle(Handle):
     def __init__(self) -> None:
         self.device = cast(Tag, NFCHandle.device)
         self.handle = None  # type: Optional[IsoDep]
+        self.transport = None
+        self.sending = False
 
     def open(self) -> None:
         if self.device is not None:
@@ -34,6 +36,8 @@ class NFCHandle(Handle):
                 raise BaseException(e)
 
     def close(self) -> None:
+        while self.sending:
+            time.sleep(0)
         if self.handle is not None:
             self.handle.close()
         self.handle = None
@@ -44,7 +48,8 @@ class NFCHandle(Handle):
         chunks = binascii.unhexlify(bytes(chunk).hex())
         count = 0
         success = False
-        while count < 3 and not success:
+        self.sending = True
+        while self.transport.running and count < 3 and not success:
             try:
                 response =  bytes(self.handle.transceive(chunks))
                 success = True
@@ -54,8 +59,10 @@ class NFCHandle(Handle):
                     print(f"send in nfc =====retry: {count}===={e.getMessage()}")
                     time.sleep(0.01)
                 else:
+                    self.sending = False
                     LOG.warning(f"NFC handler write exception {e.getMessage()}")
                     raise BaseException(e)
+        self.sending = False
         return response
 
 
@@ -71,6 +78,7 @@ class NFCTransport(ProtocolBasedTransport):
         assert handle is not None, "nfc handler can not be None"
         self.device = device
         self.handle = handle
+        self.handle.transport = self
         super().__init__(protocol=ProtocolV1(handle))
 
     def get_path(self) -> str:
@@ -78,4 +86,4 @@ class NFCTransport(ProtocolBasedTransport):
 
     @classmethod
     def enumerate(cls) -> Iterable["NFCTransport"]:
-        return [NFCTransport(cls.PATH_PREFIX, NFCHandle())]
+        return [NFCTransport(cls.PATH_PREFIX, NFCHandle(cls.client))]

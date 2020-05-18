@@ -95,6 +95,7 @@ class Protocol:
     def __init__(self, handle: Handle) -> None:
         self.handle = handle
         self.session_counter = 0
+        self.running = True
 
     # XXX we might be able to remove this now that TrezorClient does session handling
     def begin_session(self) -> None:
@@ -103,8 +104,12 @@ class Protocol:
         self.session_counter += 1
 
     def end_session(self) -> None:
+        while self.sending:
         if self.session_counter == 1:
+            self.running = False
             self.handle.close()
+            while self.sending:
+               time.sleep()
         self.session_counter -= 1
 
     def read(self) -> protobuf.MessageType:
@@ -200,7 +205,8 @@ class ProtocolV1(Protocol):
         header = struct.pack(">HL", mapping.get_type(msg), len(ser))
         buffer = bytearray(b"##" + header + ser)
         origin = len(buffer)
-        while buffer:
+        self.sending = True
+        while self.running and buffer:
             if PROCESS_REPORTER and origin >= 64:
                 left = round(len(buffer) / origin, 2)
                 PROCESS_REPORTER.publishProgress(int((1 - left) * 100))
@@ -216,6 +222,7 @@ class ProtocolV1(Protocol):
                 waiting_packets = waiting_packets[63:]
             self.handle.write_chunk(bytes(send_packets))
             buffer = buffer[189:]
+        self.sending = False
 
     def nfc_send(self, msg: protobuf.MessageType) -> protobuf.MessageType:
         global PROCESS_REPORTER, HTTP, OFFSET
@@ -232,7 +239,7 @@ class ProtocolV1(Protocol):
         origin = len(buffer)
         if HTTP and OFFSET:
             origin = TOTAL
-        while buffer:
+        while self.running and buffer:
             # used for android update progress bar
             if PROCESS_REPORTER and origin >= 64:
                 left = round(len(buffer) / origin, 2)
@@ -253,19 +260,23 @@ class ProtocolV1(Protocol):
                 buffer = buffer[2205:]
             else:
                 print(f"unknown response {response}")
+                self.sending = False
                 raise BaseException("Unexpected response")
         print(f"send in nfc #**")
         response = b'#**'
-        while response == b'#**':
+        while self.running and response == b'#**':
             response = self.handle.write_chunk_nfc(bytearray(b'#**'))
         if response[:3] != b"?##":
+            self.sending = False
             raise RuntimeError("Unexpected magic characters")
         try:
             headerlen = struct.calcsize(">HL")
             msg_type, data_len = struct.unpack(">HL", response[3: 3 + headerlen])
         except Exception:
+            self.sending = False
             raise RuntimeError("Cannot parse header")
         print(f"receive response :{protobuf.load_message(BytesIO(response[3 + headerlen:]), mapping.get_class(msg_type))}")
+        self.sending = False
         return protobuf.load_message(BytesIO(response[3 + headerlen:]), mapping.get_class(msg_type))
 
     def ble_read(self) -> protobuf.MessageType:
